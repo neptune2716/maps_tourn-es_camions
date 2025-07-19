@@ -245,8 +245,29 @@ export default function RouteOptimizer() {
                   <div>Distance: {route.totalDistance.toFixed(1)} km</div>
                   <div>Duration: {Math.round(route.totalDuration)} minutes</div>
                   <div>Locations: {route.locations.length}</div>
+                  <div>Vehicle: <span className="capitalize">{route.vehicleType}</span></div>
+                  <div>Method: <span className="capitalize">{route.optimizationMethod.replace('_', ' ')}</span></div>
                   {route.isLoop && <div>🔄 Round trip route</div>}
                 </div>
+                
+                {/* Detailed route breakdown */}
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-sm font-medium text-green-900 hover:text-green-700">
+                    Show detailed breakdown
+                  </summary>
+                  <div className="mt-2 space-y-1 text-xs">
+                    {route.segments.map((segment, index) => (
+                      <div key={index} className="flex justify-between items-center py-1 border-b border-green-200 last:border-b-0">
+                        <span className="truncate mr-2">
+                          {segment.from.address} → {segment.to.address}
+                        </span>
+                        <span className="text-green-700 whitespace-nowrap">
+                          {segment.distance.toFixed(1)}km • {Math.round(segment.duration)}min
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
               </div>
             )}
           </div>

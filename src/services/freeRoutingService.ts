@@ -29,7 +29,8 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       const optimizedLocations = await this.optimizeLocationOrder(
         request.locations,
         request.optimizationMethod,
-        request.isLoop
+        request.isLoop,
+        request.vehicleType
       );
 
       // Calculer les segments du trajet
@@ -49,6 +50,16 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
         segments,
         optimizationMethod: request.optimizationMethod,
       };
+
+      // Log optimization results for debugging
+      console.log(`🚗 Route optimization complete:`, {
+        vehicleType: request.vehicleType,
+        method: request.optimizationMethod,
+        isLoop: request.isLoop,
+        totalDistance: route.totalDistance.toFixed(1) + 'km',
+        totalDuration: Math.round(route.totalDuration) + 'min',
+        locationsOrder: optimizedLocations.map(loc => loc.address.substring(0, 30) + '...')
+      });
 
       return {
         route,
@@ -99,7 +110,8 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
   private async optimizeLocationOrder(
     locations: Location[],
     method: OptimizationMethod,
-    isLoop: boolean
+    isLoop: boolean,
+    vehicleType: VehicleType
   ): Promise<Location[]> {
     if (locations.length <= 2) {
       return locations;
@@ -118,7 +130,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     
     if (unlockedLocations.length <= 8) {
       // Pour peu d'emplacements, utiliser un algorithme plus sophistiqué
-      optimized = await this.advancedOptimization(unlockedLocations, method, isLoop);
+      optimized = await this.advancedOptimization(unlockedLocations, method, isLoop, vehicleType);
     } else {
       // Pour beaucoup d'emplacements, utiliser l'algorithme du plus proche voisin amélioré
       optimized = await this.nearestNeighborOptimization(unlockedLocations, method);
@@ -143,7 +155,8 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
   private async advancedOptimization(
     locations: Location[],
     method: OptimizationMethod,
-    isLoop: boolean
+    isLoop: boolean,
+    vehicleType: VehicleType
   ): Promise<Location[]> {
     if (locations.length <= 1) return locations;
 
@@ -154,7 +167,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
 
     // Commencer par l'algorithme du plus proche voisin
     const nearestNeighborResult = await this.nearestNeighborOptimization(locations, method);
-    const nearestScore = await this.calculateOrderScore(nearestNeighborResult, method, isLoop);
+    const nearestScore = await this.calculateOrderScore(nearestNeighborResult, method, isLoop, vehicleType);
     
     if (nearestScore < bestScore) {
       bestScore = nearestScore;
@@ -166,7 +179,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       const permutations = this.generatePermutations(locations, Math.min(maxPermutations, 20));
       
       for (const permutation of permutations) {
-        const score = await this.calculateOrderScore(permutation, method, isLoop);
+        const score = await this.calculateOrderScore(permutation, method, isLoop, vehicleType);
         if (score < bestScore) {
           bestScore = score;
           bestOrder = permutation;
@@ -180,47 +193,77 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
   private async calculateOrderScore(
     locations: Location[],
     method: OptimizationMethod,
-    isLoop: boolean
+    isLoop: boolean,
+    vehicleType: VehicleType = 'car'
   ): Promise<number> {
     let totalScore = 0;
 
+    // Calculate actual route segments for more accurate scoring
     for (let i = 0; i < locations.length - 1; i++) {
       const from = locations[i];
       const to = locations[i + 1];
       
       if (!from.coordinates || !to.coordinates) continue;
 
-      const distance = this.calculateDistance(from.coordinates, to.coordinates);
-      
-      if (method === 'shortest_distance') {
-        totalScore += distance;
-      } else if (method === 'fastest_time') {
-        const estimatedSpeed = 55; // km/h
-        totalScore += (distance / estimatedSpeed) * 60; // minutes
-      } else { // balanced
-        const estimatedSpeed = 60; // km/h
-        const time = (distance / estimatedSpeed) * 60;
-        totalScore += distance * 0.6 + time * 0.4;
+      try {
+        // For small route sets, use actual API calls for precise optimization
+        const segment = await this.calculateSegment(from, to, vehicleType);
+        
+        if (method === 'shortest_distance') {
+          totalScore += segment.distance;
+        } else if (method === 'fastest_time') {
+          totalScore += segment.duration;
+        } else { // balanced
+          // Balanced approach: 40% distance, 60% time
+          totalScore += segment.distance * 0.4 + segment.duration * 0.6;
+        }
+      } catch (error) {
+        // Fallback to Haversine distance calculation
+        const distance = this.calculateDistance(from.coordinates, to.coordinates);
+        
+        if (method === 'shortest_distance') {
+          totalScore += distance;
+        } else if (method === 'fastest_time') {
+          const estimatedSpeed = vehicleType === 'truck' ? 50 : 65;
+          totalScore += (distance / estimatedSpeed) * 60;
+        } else { // balanced
+          const estimatedSpeed = vehicleType === 'truck' ? 55 : 60;
+          const time = (distance / estimatedSpeed) * 60;
+          totalScore += distance * 0.4 + time * 0.6;
+        }
       }
     }
 
-    // Ajouter le coût du retour pour les trajets en boucle
+    // Add return leg cost for loop routes
     if (isLoop && locations.length > 1) {
       const first = locations[0];
       const last = locations[locations.length - 1];
       
       if (first.coordinates && last.coordinates) {
-        const returnDistance = this.calculateDistance(last.coordinates, first.coordinates);
-        
-        if (method === 'shortest_distance') {
-          totalScore += returnDistance;
-        } else if (method === 'fastest_time') {
-          const estimatedSpeed = 55;
-          totalScore += (returnDistance / estimatedSpeed) * 60;
-        } else {
-          const estimatedSpeed = 60;
-          const time = (returnDistance / estimatedSpeed) * 60;
-          totalScore += returnDistance * 0.6 + time * 0.4;
+        try {
+          const returnSegment = await this.calculateSegment(last, first, vehicleType);
+          
+          if (method === 'shortest_distance') {
+            totalScore += returnSegment.distance;
+          } else if (method === 'fastest_time') {
+            totalScore += returnSegment.duration;
+          } else {
+            totalScore += returnSegment.distance * 0.4 + returnSegment.duration * 0.6;
+          }
+        } catch (error) {
+          // Fallback calculation
+          const returnDistance = this.calculateDistance(last.coordinates, first.coordinates);
+          
+          if (method === 'shortest_distance') {
+            totalScore += returnDistance;
+          } else if (method === 'fastest_time') {
+            const estimatedSpeed = vehicleType === 'truck' ? 50 : 65;
+            totalScore += (returnDistance / estimatedSpeed) * 60;
+          } else {
+            const estimatedSpeed = vehicleType === 'truck' ? 55 : 60;
+            const time = (returnDistance / estimatedSpeed) * 60;
+            totalScore += returnDistance * 0.4 + time * 0.6;
+          }
         }
       }
     }
@@ -273,21 +316,25 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
         }
 
         let score: number;
+        const distance = this.calculateDistance(current.coordinates, location.coordinates);
         
         if (method === 'shortest_distance') {
-          // Optimiser uniquement sur la distance
-          score = this.calculateDistance(current.coordinates, location.coordinates);
+          // Purely optimize on distance
+          score = distance;
         } else if (method === 'fastest_time') {
-          // Optimiser sur le temps en tenant compte de la vitesse estimée
-          const distance = this.calculateDistance(current.coordinates, location.coordinates);
-          const estimatedSpeed = 50; // km/h vitesse moyenne en ville
-          score = (distance / estimatedSpeed) * 60; // temps en minutes
+          // Optimize on estimated time - consider traffic patterns
+          // Urban areas: slower, highways: faster
+          const baseSpeed = 50; // km/h base speed
+          // Add variation based on distance (longer distances likely use faster roads)
+          const speedMultiplier = distance > 10 ? 1.3 : distance > 5 ? 1.1 : 0.8;
+          const adjustedSpeed = baseSpeed * speedMultiplier;
+          score = (distance / adjustedSpeed) * 60; // time in minutes
         } else { // balanced
-          // Équilibrer distance et temps
-          const distance = this.calculateDistance(current.coordinates, location.coordinates);
-          const estimatedSpeed = 60; // km/h
+          // Balance between distance and time with emphasis on efficiency
+          const estimatedSpeed = 55; // km/h
           const time = (distance / estimatedSpeed) * 60;
-          score = distance * 0.6 + time * 0.4; // 60% distance, 40% temps
+          // Weight: 40% distance, 60% time (favor time slightly)
+          score = distance * 0.4 + time * 0.6;
         }
 
         if (score < bestScore) {
@@ -344,8 +391,9 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     }
 
     try {
-      // Utiliser OSRM (gratuit) pour le calcul de trajet
-      const profile = vehicleType === 'truck' ? 'driving' : 'driving'; // OSRM public n'a pas de profil camion
+      // Use different profiles for different vehicle types
+      // Note: OSRM public only supports 'driving', but we can simulate truck behavior
+      const profile = 'driving'; // OSRM public limitation
       const coordinates = `${from.coordinates.longitude},${from.coordinates.latitude};${to.coordinates.longitude},${to.coordinates.latitude}`;
       
       const url = `${this.osrmBaseUrl}/route/v1/${profile}/${coordinates}?overview=full&geometries=geojson&steps=true`;
@@ -359,15 +407,25 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0];
+        let distance = route.distance / 1000; // Convert to kilometers
+        let duration = route.duration / 60; // Convert to minutes
+
+        // Apply vehicle-specific adjustments
+        if (vehicleType === 'truck') {
+          // Trucks are slower and may take longer routes
+          distance *= 1.1; // 10% longer distance for truck routes (avoiding weight restrictions)
+          duration *= 1.4; // 40% more time due to lower speeds and restrictions
+        }
+
         return {
           from,
           to,
-          distance: route.distance / 1000, // Convertir en kilomètres
-          duration: route.duration / 60, // Convertir en minutes
+          distance,
+          duration,
           instructions: route.legs[0]?.steps?.map((step: any) => 
             step.maneuver?.instruction || `Continuer pendant ${(step.distance/1000).toFixed(1)}km`
           ) || [],
-          polyline: route.geometry, // Garder la géométrie GeoJSON au lieu de la stringifier
+          polyline: route.geometry, // Keep GeoJSON geometry
         };
       } else {
         throw new Error('Aucun trajet trouvé');
@@ -375,9 +433,9 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     } catch (error) {
       console.error('Échec du calcul de segment, utilisation de la ligne droite:', error);
       
-      // Solution de secours: calcul en ligne droite
+      // Fallback: straight line calculation with vehicle-specific speeds
       const distance = this.calculateDistance(from.coordinates, to.coordinates);
-      const estimatedSpeed = vehicleType === 'truck' ? 60 : 80; // km/h
+      const estimatedSpeed = vehicleType === 'truck' ? 50 : 70; // km/h - trucks slower
       const duration = (distance / estimatedSpeed) * 60; // minutes
 
       return {
@@ -386,7 +444,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
         distance,
         duration,
         instructions: [`Parcourir ${distance.toFixed(1)}km vers ${to.address}`],
-        polyline: null, // Pas de géométrie pour les estimations
+        polyline: null,
       };
     }
   }
