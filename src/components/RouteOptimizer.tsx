@@ -235,37 +235,42 @@ export default function RouteOptimizer() {
                 </h2>
                 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <div className="font-medium text-blue-900">Distance</div>
                       <div className="text-blue-700 text-lg font-semibold">{route.totalDistance.toFixed(1)} km</div>
                     </div>
                     <div className="bg-green-50 p-3 rounded-lg">
                       <div className="font-medium text-green-900">Durée</div>
-                      <div className="text-green-700 text-lg font-semibold">{Math.round(route.totalDuration)} min</div>
+                      <div className="text-green-700 text-lg font-semibold">
+                        {route.totalDuration >= 60 
+                          ? `${Math.floor(route.totalDuration / 60)}h${(Math.round(route.totalDuration) % 60).toString().padStart(2, '0')}`
+                          : `${Math.round(route.totalDuration)} min`
+                        }
+                      </div>
                     </div>
                   </div>
                   
                   <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="text-xs text-gray-600 space-y-1">
+                    <div className="text-xs text-gray-600 grid grid-cols-2 gap-x-3 gap-y-1">
                       <div className="flex items-center">
                         {route.vehicleType === 'car' ? <Car className="h-3 w-3 mr-1" /> : <Truck className="h-3 w-3 mr-1" />}
                         <span className="font-medium">Véhicule:</span> 
                         <span className="ml-1 capitalize">{route.vehicleType === 'car' ? 'Voiture' : 'Camion'}</span>
                       </div>
                       <div className="flex items-center">
-                        <Settings2 className="h-3 w-3 mr-1" />
-                        <span className="font-medium">Méthode:</span> 
-                        <span className="ml-1">
-                          {route.optimizationMethod === 'shortest_distance' ? 'Distance la plus courte' :
-                           route.optimizationMethod === 'fastest_time' ? 'Temps le plus rapide' :
-                           'Équilibré'}
-                        </span>
-                      </div>
-                      <div className="flex items-center">
                         <MapPin className="h-3 w-3 mr-1" />
                         <span className="font-medium">Arrêts:</span> 
                         <span className="ml-1">{route.locations.length}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Settings2 className="h-3 w-3 mr-1" />
+                        <span className="font-medium">Méthode:</span> 
+                        <span className="ml-1">
+                          {route.optimizationMethod === 'shortest_distance' ? 'Distance' :
+                           route.optimizationMethod === 'fastest_time' ? 'Temps' :
+                           'Équilibré'}
+                        </span>
                       </div>
                       {route.isLoop && (
                         <div className="flex items-center">
