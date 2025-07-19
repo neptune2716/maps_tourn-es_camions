@@ -197,3 +197,93 @@ export function isAddress(input: string): boolean {
   
   return addressIndicators.some(pattern => pattern.test(input));
 }
+
+/**
+ * Trim long addresses to just the basic name and city
+ * Example: "Cathedral of Notre Dame, 6, Parvis Notre-Dame - Place Jean-Paul II, Quartier Les Îles, 4th Arrondissement, Paris, Metropolitan France, 75004, France"
+ * Returns: "Cathedral of Notre Dame, Paris"
+ */
+export function trimAddress(fullAddress: string): string {
+  if (!fullAddress) return fullAddress;
+  
+  const parts = fullAddress.split(',').map(part => part.trim());
+  
+  if (parts.length <= 1) {
+    return fullAddress;
+  }
+  
+  // Get the first part (main name/place)
+  const mainName = parts[0];
+  
+  // Common city patterns and known cities
+  const cityPatterns = [
+    /^Paris$/i,
+    /^London$/i,
+    /^New York$/i,
+    /^Berlin$/i,
+    /^Madrid$/i,
+    /^Rome$/i,
+    /^Amsterdam$/i,
+    /^Brussels$/i,
+    /^Vienna$/i,
+    /^Prague$/i,
+    /^Warsaw$/i,
+    /^Budapest$/i,
+    /^Stockholm$/i,
+    /^Oslo$/i,
+    /^Copenhagen$/i,
+    /^Helsinki$/i,
+    /^Dublin$/i,
+    /^Lisbon$/i,
+    /^Athens$/i,
+    /^Barcelona$/i,
+    /^Milan$/i,
+    /^Munich$/i,
+    /^Frankfurt$/i,
+    /^Hamburg$/i,
+    /^Lyon$/i,
+    /^Marseille$/i,
+    /^Toulouse$/i,
+    /^Nice$/i,
+    /^Lille$/i,
+    /^Bordeaux$/i,
+    /^Nantes$/i,
+    /^Strasbourg$/i,
+    /^Montpellier$/i,
+  ];
+  
+  // Find city by looking for known city patterns
+  let city = '';
+  for (const part of parts) {
+    const cleanPart = part.trim();
+    
+    // Skip if it's a postal code, country, or administrative region
+    if (/^\d+$/.test(cleanPart)) continue; // postal codes
+    if (/^[A-Z]{2,3}$/.test(cleanPart)) continue; // country codes
+    if (/(france|germany|italy|spain|uk|united kingdom|netherlands|belgium|austria|switzerland)$/i.test(cleanPart)) continue; // countries
+    if (/(metropolitan|arrondissement|quartier|district|borough|county|province|region|state)$/i.test(cleanPart)) continue; // administrative regions
+    
+    // Check if it matches a known city pattern
+    const isCity = cityPatterns.some(pattern => pattern.test(cleanPart));
+    if (isCity) {
+      city = cleanPart;
+      break;
+    }
+    
+    // If no known city found, look for parts that seem like cities (simple names, not too long)
+    if (!city && cleanPart.length >= 3 && cleanPart.length <= 20 && 
+        !/^\d/.test(cleanPart) && // doesn't start with number
+        !/[-–—]/.test(cleanPart) && // doesn't contain dashes (usually street names)
+        !/^(avenue|street|road|boulevard|place|square|rue|via|plaza)$/i.test(cleanPart)) { // not street types
+      city = cleanPart;
+    }
+  }
+  
+  // If we found both name and city, combine them
+  if (mainName && city && mainName !== city) {
+    return `${mainName}, ${city}`;
+  }
+  
+  // Fallback: return just the main name or first two parts
+  return parts.length > 1 ? `${parts[0]}, ${parts[1]}` : parts[0];
+}

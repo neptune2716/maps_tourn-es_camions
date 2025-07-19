@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Lock, LockOpen, GripVertical, X, Edit, MapPin, AlertTriangle } from 'lucide-react';
 import { Location } from '../types/index.ts';
+import { trimAddress } from '../utils/routeUtils.ts';
 import AddressAutocomplete from './AddressAutocomplete.tsx';
 import { AddressSuggestion } from '../hooks/useAddressSearch.ts';
 
@@ -226,7 +227,7 @@ export default function LocationList({
                 <div>
                   <div className="flex items-center">
                     <span className="text-sm text-gray-900 block truncate font-medium">
-                      {location.address}
+                      {trimAddress(location.address)}
                     </span>
                     {!location.coordinates && (
                       <AlertTriangle className="h-3 w-3 text-amber-500 ml-1 flex-shrink-0" />

@@ -197,32 +197,6 @@ export default function OpenStreetMapComponent({
     <div className="relative">
       <div ref={mapContainer} className={className} />
       
-      {/* Route info overlay */}
-      {route && (
-        <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 max-w-xs z-[1000]">
-          <h4 className="font-semibold text-gray-900 mb-2">📍 Informations du trajet</h4>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Distance:</span>
-              <span className="font-medium">{route.totalDistance.toFixed(1)} km</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Durée:</span>
-              <span className="font-medium">{Math.round(route.totalDuration)} min</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Véhicule:</span>
-              <span className="font-medium capitalize">{route.vehicleType}</span>
-            </div>
-            {route.isLoop && (
-              <div className="text-xs text-blue-600 mt-2">
-                🔄 Trajet en boucle
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* No locations message */}
       {locations.length === 0 && (
         <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center pointer-events-none">

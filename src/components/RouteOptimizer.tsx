@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Upload, MapPin, Play, AlertCircle, AlertTriangle, Settings2, Car, Truck, Clock, Fuel, Navigation } from 'lucide-react';
 import { Location, VehicleType, OptimizationMethod, Route } from '../types/index.ts';
 import { freeRoutingService } from '../services/freeRoutingService.ts';
+import { trimAddress } from '../utils/routeUtils.ts';
 import OpenStreetMapComponent from './OpenStreetMapComponent.tsx';
 import AddressAutocomplete from './AddressAutocomplete.tsx';
 import FileUpload from './FileUpload.tsx';
@@ -413,15 +414,10 @@ export default function RouteOptimizer() {
           {/* Right Panel - Map (6/12 = 1/2 width) */}
           <div className="col-span-6">
             <div className="card relative">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">
                   Carte
                 </h2>
-                {route && (
-                  <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                    {route.totalDistance.toFixed(1)} km • {Math.round(route.totalDuration)} min
-                  </div>
-                )}
               </div>
               
               {/* Map notifications - positioned to avoid zoom controls */}
@@ -461,10 +457,10 @@ export default function RouteOptimizer() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-medium text-sm text-gray-900 truncate">
-                            {segment.from.address}
+                            {trimAddress(segment.from.address)}
                           </div>
                           <div className="text-xs text-gray-500 truncate">
-                            → {segment.to.address}
+                            → {trimAddress(segment.to.address)}
                           </div>
                         </div>
                       </div>
