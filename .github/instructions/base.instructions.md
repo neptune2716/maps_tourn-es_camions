@@ -10,6 +10,7 @@ This file serves as a template for the base configuration of the repository. It 
 - Ensure that all code adheres to the project's coding standards.
 - Maintain clear and concise documentation for all functions and modules.
 - After each change modify the todo list in the TODO.md file to reflect the current state of the project.
+- the ui has to be written in french
 
 
 ## The project

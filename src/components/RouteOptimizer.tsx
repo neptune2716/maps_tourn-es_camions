@@ -135,9 +135,10 @@ export default function RouteOptimizer() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-12 gap-4 items-start">
-          {/* Left Panel - Location Input (3/12 = 1/4 width) */}
-          <div className="col-span-3">
+        <div className="grid grid-cols-12 gap-4">
+          {/* Left Column - Emplacements and Résultats */}
+          <div className="col-span-3 space-y-4">
+            {/* Emplacements Container */}
             <div className="card">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <MapPin className="mr-2 h-5 w-5" />
@@ -161,7 +162,7 @@ export default function RouteOptimizer() {
                 </button>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-3 max-h-80 overflow-y-auto mb-4">
+              <div className="border border-gray-200 rounded-lg p-2.5 max-h-80 overflow-y-auto mb-2.5">
                 <LocationList
                   locations={locations}
                   onLocationUpdate={handleLocationUpdate}
@@ -171,7 +172,7 @@ export default function RouteOptimizer() {
                 />
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <button 
                   onClick={() => setShowFileUpload(true)}
                   className="btn-secondary w-full text-sm flex items-center justify-center"
@@ -180,7 +181,7 @@ export default function RouteOptimizer() {
                   Importer fichier
                 </button>
 
-                {/* Optimize Button - Now inside the location box */}
+                {/* Optimize Button */}
                 <div className="pt-3 border-t border-gray-200">
                   <button
                     onClick={optimizeRoute}
@@ -224,11 +225,64 @@ export default function RouteOptimizer() {
                 </div>
               </div>
             </div>
+
+            {/* Résultats Container */}
+            {route && (
+              <div className="card">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Fuel className="mr-2 h-5 w-5" />
+                  Résultats
+                </h2>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-3 text-sm">
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="font-medium text-blue-900">Distance</div>
+                      <div className="text-blue-700 text-lg font-semibold">{route.totalDistance.toFixed(1)} km</div>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <div className="font-medium text-green-900">Durée</div>
+                      <div className="text-green-700 text-lg font-semibold">{Math.round(route.totalDuration)} min</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <div className="flex items-center">
+                        {route.vehicleType === 'car' ? <Car className="h-3 w-3 mr-1" /> : <Truck className="h-3 w-3 mr-1" />}
+                        <span className="font-medium">Véhicule:</span> 
+                        <span className="ml-1 capitalize">{route.vehicleType === 'car' ? 'Voiture' : 'Camion'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Settings2 className="h-3 w-3 mr-1" />
+                        <span className="font-medium">Méthode:</span> 
+                        <span className="ml-1">
+                          {route.optimizationMethod === 'shortest_distance' ? 'Distance la plus courte' :
+                           route.optimizationMethod === 'fastest_time' ? 'Temps le plus rapide' :
+                           'Équilibré'}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        <span className="font-medium">Arrêts:</span> 
+                        <span className="ml-1">{route.locations.length}</span>
+                      </div>
+                      {route.isLoop && (
+                        <div className="flex items-center">
+                          <Navigation className="h-3 w-3 mr-1" />
+                          <span className="font-medium">Trajet en boucle</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Middle Panel - Settings (3/12 = 1/4 width) */}
+          {/* Middle Panel - Paramètres (3/12 = 1/4 width) */}
           <div className="col-span-3">
-            <div className="card">
+            <div className="card h-fit">
               <div className="flex items-center mb-4">
                 <Settings2 className="mr-2 h-5 w-5" />
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -236,17 +290,17 @@ export default function RouteOptimizer() {
                 </h2>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {/* Vehicle Type Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Type de Véhicule
                   </label>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-2">
                     <button
                       onClick={() => setVehicleType('car')}
                       className={`
-                        p-3 rounded-lg border-2 text-left transition-all duration-200
+                        p-3.5 rounded-lg border-2 text-left transition-all duration-200
                         ${vehicleType === 'car' 
                           ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -288,7 +342,7 @@ export default function RouteOptimizer() {
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Méthode d'Optimisation
                   </label>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <button
                       onClick={() => setOptimizationMethod('shortest_distance')}
                       className={`
@@ -305,7 +359,7 @@ export default function RouteOptimizer() {
                           <div className={`font-medium text-sm ${optimizationMethod === 'shortest_distance' ? 'text-blue-900' : 'text-gray-900'}`}>
                             Distance la plus courte
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 mt-0.5">
                             Minimise la distance totale
                           </div>
                         </div>
@@ -328,7 +382,7 @@ export default function RouteOptimizer() {
                           <div className={`font-medium text-sm ${optimizationMethod === 'fastest_time' ? 'text-blue-900' : 'text-gray-900'}`}>
                             Temps le plus rapide
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 mt-0.5">
                             Minimise le temps de trajet
                           </div>
                         </div>
@@ -351,7 +405,7 @@ export default function RouteOptimizer() {
                           <div className={`font-medium text-sm ${optimizationMethod === 'balanced' ? 'text-blue-900' : 'text-gray-900'}`}>
                             Équilibré
                           </div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-gray-600 mt-0.5">
                             Distance et temps optimisés
                           </div>
                         </div>
@@ -382,32 +436,6 @@ export default function RouteOptimizer() {
                   </label>
                 </div>
               </div>
-              
-              {/* Quick Results Display */}
-              {route && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Résultats</h3>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 gap-3 text-sm">
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <div className="font-medium text-blue-900">Distance</div>
-                        <div className="text-blue-700">{route.totalDistance.toFixed(1)} km</div>
-                      </div>
-                      <div className="bg-green-50 p-3 rounded-lg">
-                        <div className="font-medium text-green-900">Durée</div>
-                        <div className="text-green-700">{Math.round(route.totalDuration)} min</div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div>🚗 Véhicule: <span className="capitalize">{route.vehicleType}</span></div>
-                      <div>⚡ Méthode: <span className="capitalize">{route.optimizationMethod.replace('_', ' ')}</span></div>
-                      <div>📍 Arrêts: {route.locations.length}</div>
-                      {route.isLoop && <div>🔄 Trajet en boucle</div>}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -446,7 +474,7 @@ export default function RouteOptimizer() {
 
             {/* Detailed Route Breakdown */}
             {route && (
-              <div className="card mt-6">
+              <div className="card mt-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails du Trajet</h3>
                 <div className="space-y-2">
                   {route.segments.map((segment, index) => (
