@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Upload, MapPin, Play, AlertCircle, AlertTriangle } from 'lucide-react';
+import { Upload, MapPin, Play, AlertCircle, AlertTriangle, Settings2, Car, Truck, Clock, Fuel, Navigation } from 'lucide-react';
 import { Location, VehicleType, OptimizationMethod, Route } from '../types/index.ts';
 import { freeRoutingService } from '../services/freeRoutingService.ts';
 import OpenStreetMapComponent from './OpenStreetMapComponent.tsx';
 import AddressAutocomplete from './AddressAutocomplete.tsx';
 import FileUpload from './FileUpload.tsx';
 import LocationList from './LocationList.tsx';
-import RouteSettings from './RouteSettings.tsx';
 import { AddressSuggestion } from '../hooks/useAddressSearch.ts';
 
 export default function RouteOptimizer() {
@@ -133,24 +132,12 @@ export default function RouteOptimizer() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Optimiseur de Trajets
-          </h1>
-          <p className="text-gray-600">
-            Ajoutez vos emplacements et personnalisez les paramètres pour trouver le trajet optimal
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Panel - Location Input (1/3 width) */}
-          <div className="lg:col-span-1">
-            <div className="card sticky top-8">
+    <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="grid grid-cols-12 gap-4 items-start">
+          {/* Left Panel - Location Input (3/12 = 1/4 width) */}
+          <div className="col-span-3">
+            <div className="card">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <MapPin className="mr-2 h-5 w-5" />
                 Emplacements
@@ -238,13 +225,197 @@ export default function RouteOptimizer() {
             </div>
           </div>
 
-          {/* Right Panel - Map and Results (2/3 width) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Map */}
+          {/* Middle Panel - Settings (3/12 = 1/4 width) */}
+          <div className="col-span-3">
+            <div className="card">
+              <div className="flex items-center mb-4">
+                <Settings2 className="mr-2 h-5 w-5" />
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Paramètres de Route
+                </h2>
+              </div>
+
+              <div className="space-y-6">
+                {/* Vehicle Type Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Type de Véhicule
+                  </label>
+                  <div className="grid grid-cols-1 gap-3">
+                    <button
+                      onClick={() => setVehicleType('car')}
+                      className={`
+                        p-3 rounded-lg border-2 text-left transition-all duration-200
+                        ${vehicleType === 'car' 
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center mb-1">
+                        <Car className={`h-4 w-4 mr-2 ${vehicleType === 'car' ? 'text-blue-600' : 'text-gray-600'}`} />
+                        <span className={`font-medium text-sm ${vehicleType === 'car' ? 'text-blue-900' : 'text-gray-900'}`}>
+                          Voiture
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600">Véhicule léger, 80 km/h</p>
+                    </button>
+                    
+                    <button
+                      onClick={() => setVehicleType('truck')}
+                      className={`
+                        p-3 rounded-lg border-2 text-left transition-all duration-200
+                        ${vehicleType === 'truck' 
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center mb-1">
+                        <Truck className={`h-4 w-4 mr-2 ${vehicleType === 'truck' ? 'text-blue-600' : 'text-gray-600'}`} />
+                        <span className={`font-medium text-sm ${vehicleType === 'truck' ? 'text-blue-900' : 'text-gray-900'}`}>
+                          Camion
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600">Poids lourd, 60 km/h</p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Optimization Method */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Méthode d'Optimisation
+                  </label>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setOptimizationMethod('shortest_distance')}
+                      className={`
+                        w-full p-3 rounded-lg border text-left transition-all duration-200
+                        ${optimizationMethod === 'shortest_distance' 
+                          ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' 
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center">
+                        <Navigation className={`h-4 w-4 mr-2 ${optimizationMethod === 'shortest_distance' ? 'text-blue-600' : 'text-green-600'}`} />
+                        <div className="flex-1">
+                          <div className={`font-medium text-sm ${optimizationMethod === 'shortest_distance' ? 'text-blue-900' : 'text-gray-900'}`}>
+                            Distance la plus courte
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            Minimise la distance totale
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={() => setOptimizationMethod('fastest_time')}
+                      className={`
+                        w-full p-3 rounded-lg border text-left transition-all duration-200
+                        ${optimizationMethod === 'fastest_time' 
+                          ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' 
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center">
+                        <Clock className={`h-4 w-4 mr-2 ${optimizationMethod === 'fastest_time' ? 'text-blue-600' : 'text-blue-600'}`} />
+                        <div className="flex-1">
+                          <div className={`font-medium text-sm ${optimizationMethod === 'fastest_time' ? 'text-blue-900' : 'text-gray-900'}`}>
+                            Temps le plus rapide
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            Minimise le temps de trajet
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={() => setOptimizationMethod('balanced')}
+                      className={`
+                        w-full p-3 rounded-lg border text-left transition-all duration-200
+                        ${optimizationMethod === 'balanced' 
+                          ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' 
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center">
+                        <Fuel className={`h-4 w-4 mr-2 ${optimizationMethod === 'balanced' ? 'text-blue-600' : 'text-purple-600'}`} />
+                        <div className="flex-1">
+                          <div className={`font-medium text-sm ${optimizationMethod === 'balanced' ? 'text-blue-900' : 'text-gray-900'}`}>
+                            Équilibré
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            Distance et temps optimisés
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Loop Option */}
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="mr-2">
+                      <Navigation className="h-4 w-4 text-indigo-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm text-gray-900">Trajet en boucle</div>
+                      <div className="text-xs text-gray-600">Retourner au point de départ</div>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isLoop}
+                      onChange={(e) => setIsLoop(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Quick Results Display */}
+              {route && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Résultats</h3>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-3 text-sm">
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <div className="font-medium text-blue-900">Distance</div>
+                        <div className="text-blue-700">{route.totalDistance.toFixed(1)} km</div>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <div className="font-medium text-green-900">Durée</div>
+                        <div className="text-green-700">{Math.round(route.totalDuration)} min</div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <div>🚗 Véhicule: <span className="capitalize">{route.vehicleType}</span></div>
+                      <div>⚡ Méthode: <span className="capitalize">{route.optimizationMethod.replace('_', ' ')}</span></div>
+                      <div>📍 Arrêts: {route.locations.length}</div>
+                      {route.isLoop && <div>🔄 Trajet en boucle</div>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Panel - Map (6/12 = 1/2 width) */}
+          <div className="col-span-6">
             <div className="card relative">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Carte du Trajet
+                  Carte
                 </h2>
                 {route && (
                   <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
@@ -277,50 +448,9 @@ export default function RouteOptimizer() {
               />
             </div>
 
-            {/* Settings and Quick Results */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Settings */}
-              <div className="space-y-4">
-                <RouteSettings
-                  vehicleType={vehicleType}
-                  optimizationMethod={optimizationMethod}
-                  isLoop={isLoop}
-                  onVehicleTypeChange={setVehicleType}
-                  onOptimizationMethodChange={setOptimizationMethod}
-                  onLoopChange={setIsLoop}
-                />
-              </div>
-
-              {/* Quick Results Display */}
-              {route && (
-                <div className="card">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Résultats</h3>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <div className="font-medium text-blue-900">Distance</div>
-                        <div className="text-blue-700">{route.totalDistance.toFixed(1)} km</div>
-                      </div>
-                      <div className="bg-green-50 p-3 rounded-lg">
-                        <div className="font-medium text-green-900">Durée</div>
-                        <div className="text-green-700">{Math.round(route.totalDuration)} min</div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div>🚗 Véhicule: <span className="capitalize">{route.vehicleType}</span></div>
-                      <div>⚡ Méthode: <span className="capitalize">{route.optimizationMethod.replace('_', ' ')}</span></div>
-                      <div>📍 Arrêts: {route.locations.length}</div>
-                      {route.isLoop && <div>🔄 Trajet en boucle</div>}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Detailed Route Breakdown */}
             {route && (
-              <div className="card">
+              <div className="card mt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails du Trajet</h3>
                 <div className="space-y-2">
                   {route.segments.map((segment, index) => (
@@ -329,16 +459,16 @@ export default function RouteOptimizer() {
                         <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium">
                           {index + 1}
                         </div>
-                        <div>
-                          <div className="font-medium text-sm text-gray-900">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-sm text-gray-900 truncate">
                             {segment.from.address}
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 truncate">
                             → {segment.to.address}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0">
                         <div className="text-sm font-medium text-gray-900">
                           {segment.distance.toFixed(1)} km
                         </div>
