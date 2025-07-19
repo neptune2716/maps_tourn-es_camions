@@ -1,4 +1,4 @@
-import { Location, Route, RouteSegment, VehicleType, OptimizationMethod, RouteOptimizationRequest, RouteOptimizationResponse } from '../types';
+import { Location, Route, RouteSegment, VehicleType, OptimizationMethod, RouteOptimizationRequest, RouteOptimizationResponse } from '../types/index.ts';
 
 export interface FreeRoutingProvider {
   calculateRoute(request: RouteOptimizationRequest): Promise<RouteOptimizationResponse>;

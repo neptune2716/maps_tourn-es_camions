@@ -1,4 +1,4 @@
-import { ExternalLink, Key, MapPin, CheckCircle } from 'lucide-react';
+import { MapPin, CheckCircle, Heart, Zap } from 'lucide-react';
 
 export default function SetupGuide() {
   return (
@@ -6,15 +6,58 @@ export default function SetupGuide() {
       <div className="text-center mb-12">
         <MapPin className="mx-auto h-16 w-16 text-primary-600 mb-4" />
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Setup Your Route Optimizer
+          Ready to Go! 🚀
         </h1>
         <p className="text-xl text-gray-600">
-          Get your free API key to start optimizing routes with interactive maps
+          No setup required - start optimizing routes immediately with free services
         </p>
       </div>
 
-      {/* Step-by-step guide */}
-      <div className="space-y-8">
+      {/* No Setup Required */}
+      <div className="card bg-green-50 border-green-200 mb-8">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+          </div>
+          <div className="ml-4">
+            <h3 className="text-lg font-semibold text-green-900 mb-2">
+              🎉 Everything Works Out of the Box!
+            </h3>
+            <p className="text-green-700 mb-4">
+              This application uses 100% free services. No API keys, no credit cards, no setup required!
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2">✅ What's Included:</h4>
+                <ul className="text-green-700 space-y-1">
+                  <li>• Interactive OpenStreetMap</li>
+                  <li>• French address autocomplete</li>
+                  <li>• Accent normalization (é→e, œ→oe)</li>
+                  <li>• Real-time route optimization</li>
+                  <li>• GPS coordinate retrieval</li>
+                  <li>• Vehicle-specific routing</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-green-800 mb-2">🆓 Free Services Used:</h4>
+                <ul className="text-green-700 space-y-1">
+                  <li>• OpenStreetMap (mapping)</li>
+                  <li>• Nominatim (geocoding)</li>
+                  <li>• OSRM (route calculation)</li>
+                  <li>• Leaflet (map display)</li>
+                  <li>• No usage limits for normal use</li>
+                  <li>• No account registration needed</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Start Guide */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Start Guide</h2>
+        
         {/* Step 1 */}
         <div className="card">
           <div className="flex items-start">
@@ -25,20 +68,19 @@ export default function SetupGuide() {
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Create a Free Mapbox Account
+                Start Adding Locations
               </h3>
               <p className="text-gray-600 mb-4">
-                Mapbox provides free maps and routing for up to 50,000 requests per month.
+                Click "Ajouter une adresse" and start typing any French address or location.
               </p>
-              <a 
-                href="https://account.mapbox.com/auth/signup/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Sign Up for Mapbox
-              </a>
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <p className="text-sm text-gray-700 mb-2">Try these examples:</p>
+                <div className="space-y-1 text-sm">
+                  <code className="bg-white px-2 py-1 rounded border block">Tour Eiffel</code>
+                  <code className="bg-white px-2 py-1 rounded border block">allee du clos masnil, olivet</code>
+                  <code className="bg-white px-2 py-1 rounded border block">61 rue république, ly</code>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -53,26 +95,15 @@ export default function SetupGuide() {
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Get Your Access Token
+                Select From Suggestions
               </h3>
               <p className="text-gray-600 mb-4">
-                After signing up, you'll find your default public token in your account dashboard.
+                Our smart autocomplete will show relevant addresses as you type. GPS coordinates are automatically retrieved.
               </p>
-              <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                <p className="text-sm text-gray-700 mb-2">Your token will look like this:</p>
-                <code className="text-xs bg-white px-2 py-1 rounded border">
-                  pk.eyJ1IjoieW91cnVzZXJuYW1lIiwiYSI6ImNsZjR0ZXh0eDAzYXkzcm1ldGlseGppN3kifQ...
-                </code>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Zap className="h-4 w-4 text-yellow-500" />
+                <span>French accents handled automatically</span>
               </div>
-              <a 
-                href="https://account.mapbox.com/access-tokens/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                <Key className="mr-2 h-4 w-4" />
-                Get Access Token
-              </a>
             </div>
           </div>
         </div>
@@ -87,90 +118,70 @@ export default function SetupGuide() {
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Configure Environment Variables
+                Optimize Your Route
               </h3>
               <p className="text-gray-600 mb-4">
-                Add your token to the project's environment file.
+                Add multiple locations, then click "Optimiser le parcours" to find the shortest route. View results on the interactive map.
               </p>
-              <div className="bg-gray-900 text-gray-100 rounded-lg p-4 mb-4 overflow-x-auto">
-                <p className="text-sm text-gray-300 mb-2">Edit .env.local file:</p>
-                <pre className="text-sm">
-{`# Replace 'your_mapbox_token_here' with your actual token
-VITE_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoieW91cnVzZXJuYW1lIi...
-
-# Other settings (optional)
-VITE_APP_ENV=development
-VITE_ENABLE_TRUCK_ROUTING=true
-VITE_ENABLE_FILE_UPLOAD=true`}
-                </pre>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 4 */}
-        <div className="card">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold">
-                4
-              </div>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Restart the Development Server
-              </h3>
-              <p className="text-gray-600 mb-4">
-                After adding your token, restart the server to load the new environment variables.
-              </p>
-              <div className="bg-gray-900 text-gray-100 rounded-lg p-4 mb-4">
-                <code className="text-sm">npm run dev</code>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Success */}
-        <div className="card bg-green-50 border-green-200">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold text-green-900 mb-2">
-                You're All Set! 🎉
-              </h3>
-              <p className="text-green-700 mb-4">
-                Once configured, you'll have access to:
-              </p>
-              <ul className="text-green-700 space-y-1">
-                <li>• Interactive maps with custom markers</li>
-                <li>• Real-time route optimization</li>
-                <li>• Address geocoding and validation</li>
-                <li>• Vehicle-specific routing</li>
-                <li>• Turn-by-turn directions</li>
-              </ul>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Alternative Options */}
+      {/* Features Overview */}
       <div className="mt-12 card bg-blue-50 border-blue-200">
         <h3 className="text-lg font-semibold text-blue-900 mb-4">
-          Alternative: Use Without Maps (Limited Functionality)
+          🌟 Advanced Features Available
         </h3>
-        <p className="text-blue-700 mb-4">
-          You can still test the route optimization logic without maps:
+        <div className="grid md:grid-cols-2 gap-4 text-blue-700">
+          <div>
+            <h4 className="font-semibold mb-2">🎯 Smart Address Input</h4>
+            <ul className="space-y-1 text-sm">
+              <li>• Real-time French suggestions</li>
+              <li>• Partial city name matching</li>
+              <li>• Accent normalization</li>
+              <li>• Keyboard navigation support</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-2">🗺️ Route Optimization</h4>
+            <ul className="space-y-1 text-sm">
+              <li>• Shortest distance calculation</li>
+              <li>• Interactive map display</li>
+              <li>• Vehicle-specific routing</li>
+              <li>• Multiple location support</li>
+            </ul>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center space-x-2 text-sm text-blue-600">
+          <Heart className="h-4 w-4 text-red-500" />
+          <span>Built for French users with love using 100% free services</span>
+        </div>
+      </div>
+
+      {/* Development Info */}
+      <div className="mt-8 card bg-gray-50">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          🔧 For Developers
+        </h3>
+        <p className="text-gray-600 mb-4">
+          Want to contribute or run this locally? Here's what you need:
         </p>
-        <ul className="text-blue-700 space-y-1 mb-4">
-          <li>• Add locations with GPS coordinates</li>
-          <li>• Test optimization algorithms</li>
-          <li>• View route calculations and distances</li>
-          <li>• Export results</li>
-        </ul>
-        <p className="text-sm text-blue-600">
-          Note: Address geocoding and visual map display require a Mapbox token.
+        <div className="bg-gray-900 text-gray-100 rounded-lg p-4 mb-4">
+          <pre className="text-sm">
+{`# Clone and install
+git clone <repository-url>
+cd maps_tournées_camions
+npm install
+
+# Start development server
+npm run dev
+
+# No environment variables needed! 🎉`}
+          </pre>
+        </div>
+        <p className="text-sm text-gray-600">
+          See README.md for complete development setup and architecture details.
         </p>
       </div>
     </div>

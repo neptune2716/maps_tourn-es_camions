@@ -208,29 +208,35 @@ A web application for finding shortest routes between multiple locations, suppor
   - [ ] ERP system connectivity
   - [ ] Mobile app development
 
-## Technical Stack Recommendations
+## Technical Stack (Current Implementation)
 ### Frontend
-- Framework: React with TypeScript
-- Styling: Tailwind CSS or Styled Components
-- Maps: Mapbox GL JS or Google Maps API
-- State Management: Redux Toolkit or Zustand
-- File Handling: react-dropzone, papaparse (CSV)
+- ✅ **Framework**: React 18 with TypeScript
+- ✅ **Styling**: Tailwind CSS with custom components
+- ✅ **Maps**: OpenStreetMap with Leaflet (100% free)
+- ✅ **Geocoding**: Nominatim API (free OpenStreetMap service)
+- ✅ **Routing**: OSRM API (free routing service)
+- ✅ **Build Tool**: Vite with hot reload
+- ✅ **Address Search**: Custom autocomplete with French support
+- 🔄 **State Management**: React hooks (Zustand planned for later)
+- 📋 **File Handling**: react-dropzone, papaparse (to be implemented)
 
-### Backend (if needed)
-- Runtime: Node.js with Express
-- Database: PostgreSQL or MongoDB
-- API: RESTful or GraphQL
-- Authentication: JWT tokens
+### Backend (Not Required Yet)
+- 🚫 **Avoided**: No backend needed thanks to free APIs
+- 🎯 **Future**: May add for advanced features like user accounts
 
-### Routing Services
-- Primary: Google Directions API
-- Alternative: HERE Routing API or OSRM
-- Optimization: OR-Tools (Google) or custom algorithms
+### APIs & Services (All Free)
+- ✅ **Geocoding**: Nominatim (OpenStreetMap)
+- ✅ **Routing**: OSRM Project 
+- ✅ **Maps**: OpenStreetMap tiles
+- ✅ **No API Keys**: No registration required
+- ✅ **No Rate Limits**: Reasonable usage accepted
 
-### Deployment
-- Frontend: Vercel, Netlify, or AWS S3
-- Backend: AWS EC2, Google Cloud Run, or Heroku
-- Database: AWS RDS or MongoDB Atlas
+### Development Tools
+- ✅ **Package Manager**: npm
+- ✅ **Linting**: ESLint with TypeScript rules
+- ✅ **Code Formatting**: Prettier
+- ✅ **Type Checking**: TypeScript strict mode
+- 📋 **Testing**: Vitest (configured, tests to be written)
 
 ## Current Status
 🚀 **Project Status**: Phase 2 Complete ✅ - Ready for Phase 3 
@@ -243,6 +249,9 @@ A web application for finding shortest routes between multiple locations, suppor
 - ✅ Integrated Nominatim API for real-time address suggestions
 - ✅ Added automatic GPS coordinate retrieval for selected addresses
 - ✅ Implemented keyboard navigation and user-friendly interface
+- ✅ Added French accent normalization (é→e, œ→oe, etc.)
+- ✅ Fixed all TypeScript import errors and build issues
+- ✅ Cleaned up legacy code and unused files
 
 ---
 *This TODO list will be updated as the project progresses to reflect the current state and priorities.*

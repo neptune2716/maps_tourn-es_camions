@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Upload, MapPin, Settings2, Play, AlertCircle } from 'lucide-react';
-import { Location, VehicleType, OptimizationMethod, Route } from '../types';
-import { freeRoutingService } from '../services/freeRoutingService';
-import OpenStreetMapComponent from './OpenStreetMapComponent';
-import AddressAutocomplete from './AddressAutocomplete';
-import { AddressSuggestion } from '../hooks/useAddressSearch';
+import { Location, VehicleType, OptimizationMethod, Route } from '../types/index.ts';
+import { freeRoutingService } from '../services/freeRoutingService.ts';
+import OpenStreetMapComponent from './OpenStreetMapComponent.tsx';
+import AddressAutocomplete from './AddressAutocomplete.tsx';
+import { AddressSuggestion } from '../hooks/useAddressSearch.ts';
 
 export default function RouteOptimizer() {
   const [locations, setLocations] = useState<Location[]>([]);

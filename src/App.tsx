@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import HomePage from './components/HomePage';
-import RouteOptimizer from './components/RouteOptimizer';
-import SetupGuide from './components/SetupGuide';
+import Layout from './components/Layout.tsx';
+import HomePage from './components/HomePage.tsx';
+import RouteOptimizer from './components/RouteOptimizer.tsx';
+import SetupGuide from './components/SetupGuide.tsx';
 
 function App() {
   return (
