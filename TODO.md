@@ -5,7 +5,25 @@ A web application for finding shortest routes between multiple locations, suppor
 
 ## Phase 1: Project Setup & Foundation ✅
 - [x] Initialize project structure
-  - [x] Set up main project directories (src, public, assets, etc.)
+- [x] **Enhanced Click-Outside Functionality**: Complete exit-edit-mode behavior for all states
+  - [x] **NEW**: Click outside to exit edit mode when suggestions are visible
+  - [x] **NEW**: Click outside to exit edit mode during loading states
+  - [x] **NEW**: OnBlur event handler for comprehensive edit mode exits
+  - [x] **NEW**: Consistent click-outside behavior across all component states
+
+- [x] **Complete Setup Guide Removal**: Clean removal of all setup guide references
+  - [x] **REMOVED**: Deleted SetupGuide.tsx component completely
+  - [x] **REMOVED**: Removed setup guide route from App.tsx
+  - [x] **REMOVED**: Eliminated "Guide d'utilisation" navigation from Layout.tsx
+  - [x] **CLEANED**: All imports and references to setup guide removed
+
+- [x] **Complete French Translation**: Full localization of all user-facing and console text
+  - [x] **TRANSLATED**: All English console logs in freeRoutingService.ts to French
+  - [x] **TRANSLATED**: All error messages and warnings to French
+  - [x] **TRANSLATED**: Configuration warnings and API messages to French
+  - [x] **VERIFIED**: All placeholders already in French
+  - [x] **VERIFIED**: All UI text already properly localized
+  - [x] **COMPLETED**: Comprehensive text audit of entire codebase - [x] Set up main project directories (src, public, assets, etc.)
   - [x] Choose and configure web framework (React/Vue/Angular)
   - [x] Set up build tools and bundler (Vite/Webpack)
   - [x] Configure TypeScript/JavaScript setup

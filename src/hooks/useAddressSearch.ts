@@ -153,7 +153,7 @@ export function useAddressSearch() {
               });
             }
           } catch (error) {
-            console.warn(`Variant search failed for "${variant}":`, error);
+            console.warn(`Échec de la recherche variante pour "${variant}":`, error);
           }
         }
       }      // Filtrer et trier les résultats avec une meilleure logique

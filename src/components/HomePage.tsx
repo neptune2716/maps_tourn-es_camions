@@ -7,19 +7,19 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="text-center mb-16">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-          Optimize Your
-          <span className="text-primary-600"> Routes</span>
+          Optimisez Vos
+          <span className="text-primary-600"> Trajets</span>
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          Find the shortest and most efficient routes for cars and trucks. 
-          Upload locations, customize preferences, and get optimized delivery routes instantly.
+          Trouvez les trajets les plus courts et les plus efficaces pour voitures et camions. 
+          Importez des emplacements, personnalisez vos préférences et obtenez des trajets optimisés instantanément.
         </p>
         <Link
           to="/optimize"
           className="inline-flex items-center px-8 py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200"
         >
           <MapPin className="mr-2 h-5 w-5" />
-          Start Optimizing Routes
+          Commencer l'Optimisation
         </Link>
       </div>
 
@@ -30,10 +30,10 @@ export default function HomePage() {
             <Upload className="h-8 w-8 text-primary-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Multiple Input Methods
+            Méthodes de Saisie Multiples
           </h3>
           <p className="text-gray-600">
-            Enter locations manually, use GPS coordinates, or upload CSV/Excel files with your delivery addresses.
+            Saisissez des emplacements manuellement, utilisez des coordonnées GPS, ou importez des fichiers CSV/Excel avec vos adresses de livraison.
           </p>
         </div>
 
@@ -42,10 +42,10 @@ export default function HomePage() {
             <Settings className="h-8 w-8 text-primary-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Vehicle Optimization
+            Optimisation par Véhicule
           </h3>
           <p className="text-gray-600">
-            Specialized routing for cars and trucks with vehicle-specific restrictions and preferences.
+            Calcul d'itinéraires spécialisé pour voitures et camions avec restrictions et préférences spécifiques au véhicule.
           </p>
         </div>
 
@@ -54,10 +54,10 @@ export default function HomePage() {
             <Route className="h-8 w-8 text-primary-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Flexible Route Control
+            Contrôle Flexible des Trajets
           </h3>
           <p className="text-gray-600">
-            Lock specific locations in order, choose loop routes, and customize your delivery sequence.
+            Verrouillez des emplacements spécifiques dans l'ordre, choisissez des trajets en boucle, et personnalisez votre séquence de livraison.
           </p>
         </div>
 
@@ -66,10 +66,10 @@ export default function HomePage() {
             <Clock className="h-8 w-8 text-primary-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Time & Distance Optimization
+            Optimisation Temps et Distance
           </h3>
           <p className="text-gray-600">
-            Choose between shortest distance, fastest time, or balanced optimization algorithms.
+            Choisissez entre distance la plus courte, temps le plus rapide, ou algorithmes d'optimisation équilibrés.
           </p>
         </div>
 
@@ -78,10 +78,10 @@ export default function HomePage() {
             <MapPin className="h-8 w-8 text-primary-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Interactive Map Visualization
+            Visualisation Carte Interactive
           </h3>
           <p className="text-gray-600">
-            See your optimized routes on an interactive map with detailed turn-by-turn directions.
+            Visualisez vos trajets optimisés sur une carte interactive avec des directions détaillées étape par étape.
           </p>
         </div>
 
@@ -90,10 +90,10 @@ export default function HomePage() {
             <Fuel className="h-8 w-8 text-primary-600" />
           </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Cost Estimation
+            Estimation des Coûts
           </h3>
           <p className="text-gray-600">
-            Get estimates for fuel costs, tolls, and total trip expenses for better planning.
+            Obtenez des estimations des coûts de carburant, péages, et dépenses totales du voyage pour une meilleure planification.
           </p>
         </div>
       </div>
@@ -101,7 +101,7 @@ export default function HomePage() {
       {/* How It Works Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
         <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
-          How It Works
+          Comment Ça Marche
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
           <div className="text-center">
@@ -109,10 +109,10 @@ export default function HomePage() {
               1
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Add Your Locations
+              Ajoutez Vos Emplacements
             </h3>
             <p className="text-gray-600">
-              Enter addresses manually or upload a file with all your delivery locations.
+              Saisissez des adresses manuellement ou importez un fichier avec tous vos emplacements de livraison.
             </p>
           </div>
           
@@ -121,10 +121,10 @@ export default function HomePage() {
               2
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Configure Settings
+              Configurez les Paramètres
             </h3>
             <p className="text-gray-600">
-              Choose your vehicle type, optimization method, and any route preferences.
+              Choisissez votre type de véhicule, méthode d'optimisation, et toutes préférences de trajet.
             </p>
           </div>
           
@@ -133,10 +133,10 @@ export default function HomePage() {
               3
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Get Optimized Route
+              Obtenez le Trajet Optimisé
             </h3>
             <p className="text-gray-600">
-              Receive the most efficient route with detailed directions and cost estimates.
+              Recevez le trajet le plus efficace avec des directions détaillées et des estimations de coûts.
             </p>
           </div>
         </div>

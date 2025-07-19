@@ -20,7 +20,7 @@ export default function Layout({ children }: LayoutProps) {
                   <MapPin className="h-6 w-6 text-white" />
                 </div>
                 <span className="text-xl font-bold text-gray-900">
-                  Route Optimizer
+                  Optimiseur de Trajets
                 </span>
               </Link>
             </div>
@@ -34,7 +34,7 @@ export default function Layout({ children }: LayoutProps) {
                     : 'text-gray-700 hover:text-primary-600'
                 }`}
               >
-                Home
+                Accueil
               </Link>
               <Link
                 to="/optimize"
@@ -44,17 +44,7 @@ export default function Layout({ children }: LayoutProps) {
                     : 'text-gray-700 hover:text-primary-600'
                 }`}
               >
-                Route Optimizer
-              </Link>
-              <Link
-                to="/setup"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === '/setup'
-                    ? 'text-primary-600 bg-primary-50'
-                    : 'text-gray-700 hover:text-primary-600'
-                }`}
-              >
-                Setup Guide
+                Optimiseur de Trajets
               </Link>
             </nav>
 
@@ -77,11 +67,11 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
               <Truck className="h-5 w-5 text-primary-600" />
               <span className="text-sm text-gray-600">
-                Optimized for cars and trucks
+                Optimisé pour voitures et camions
               </span>
             </div>
             <div className="text-sm text-gray-500">
-              © 2025 Route Optimizer. Built with modern web technologies.
+              © 2025 Optimiseur de Trajets. Développé avec des technologies web modernes.
             </div>
           </div>
         </div>

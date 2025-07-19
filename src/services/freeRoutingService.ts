@@ -66,7 +66,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       };
 
       // Log optimization results for debugging
-      console.log(`🚗 Route optimization complete:`, {
+      console.log(`🚗 Optimisation de trajet terminée:`, {
         vehicleType: request.vehicleType,
         method: request.optimizationMethod,
         isLoop: request.isLoop,
@@ -78,15 +78,15 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
 
       // Enhanced logging to show parameter effects
       if (request.optimizationMethod === 'shortest_distance') {
-        console.log(`📏 Optimized for SHORTEST DISTANCE: ${route.totalDistance.toFixed(1)}km`);
+        console.log(`📏 Optimisé pour DISTANCE LA PLUS COURTE: ${route.totalDistance.toFixed(1)}km`);
       } else if (request.optimizationMethod === 'fastest_time') {
-        console.log(`⏱️ Optimized for FASTEST TIME: ${Math.round(route.totalDuration)}min`);
+        console.log(`⏱️ Optimisé pour TEMPS LE PLUS RAPIDE: ${Math.round(route.totalDuration)}min`);
       } else {
-        console.log(`⚖️ BALANCED optimization: ${route.totalDistance.toFixed(1)}km / ${Math.round(route.totalDuration)}min`);
+        console.log(`⚖️ Optimisation ÉQUILIBRÉE: ${route.totalDistance.toFixed(1)}km / ${Math.round(route.totalDuration)}min`);
       }
 
       // Cache performance summary
-      console.log(`💾 Cache performance: ${this.segmentCache.size} segments cached`);
+      console.log(`💾 Performance du cache: ${this.segmentCache.size} segments en cache`);
 
       return {
         route,
@@ -157,13 +157,13 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     
     // Debug: Test all methods if there are exactly 3-4 locations for comparison
     if (unlockedLocations.length >= 3 && unlockedLocations.length <= 4) {
-      console.log(`🧪 Testing optimization methods for ${unlockedLocations.length} locations (with caching):`);
+      console.log(`🧪 Test des méthodes d'optimisation pour ${unlockedLocations.length} emplacements (avec cache):`);
       
       const methods: OptimizationMethod[] = ['shortest_distance', 'fastest_time', 'balanced'];
       const results: { method: OptimizationMethod; score: number; order: string[] }[] = [];
       
       // Pre-calculate all possible segments once to populate cache
-      console.log(`🔄 Pre-calculating segments for cache...`);
+      console.log(`🔄 Pré-calcul des segments pour le cache...`);
       for (let i = 0; i < unlockedLocations.length; i++) {
         for (let j = 0; j < unlockedLocations.length; j++) {
           if (i !== j) {
@@ -395,13 +395,13 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     let bestOrder = locations;
     let bestScore = Infinity;
 
-    console.log(`🔄 Loop-aware optimization for ${locations.length} locations starting from ${startLocation.address.substring(0, 30)}`);
-    console.log(`📊 Testing multiple optimization strategies:`);
+    console.log(`🔄 Optimisation intelligente de boucle pour ${locations.length} emplacements à partir de ${startLocation.address.substring(0, 30)}`);
+    console.log(`📊 Test de plusieurs stratégies d'optimisation:`);
 
     // Approach 1: Nearest neighbor from start
     const nearestFirst = await this.findNearestNeighborLoop(startLocation, otherLocations, method);
     const nearestScore = await this.calculateCompleteLoopScore(nearestFirst, method);
-    console.log(`  ✅ Nearest-first strategy: ${nearestScore.toFixed(1)} score`);
+    console.log(`  ✅ Stratégie du plus proche d'abord: ${nearestScore.toFixed(1)} score`);
     
     if (nearestScore < bestScore) {
       bestScore = nearestScore;
@@ -411,7 +411,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     // Approach 2: Farthest first (sometimes better for loops)
     const farthestFirst = await this.findFarthestFirstLoop(startLocation, otherLocations);
     const farthestScore = await this.calculateCompleteLoopScore(farthestFirst, method);
-    console.log(`  ✅ Farthest-first strategy: ${farthestScore.toFixed(1)} score`);
+    console.log(`  ✅ Stratégie du plus loin d'abord: ${farthestScore.toFixed(1)} score`);
     
     if (farthestScore < bestScore) {
       bestScore = farthestScore;
@@ -423,7 +423,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       const testOrder = [startLocation, otherLocations[i], ...otherLocations.filter((_, idx) => idx !== i)];
       const reorderedTest = await this.optimizeFromSecondLocation(testOrder);
       const testScore = await this.calculateCompleteLoopScore(reorderedTest, method);
-      console.log(`  ✅ Start-with-${otherLocations[i].address.substring(0, 20)} strategy: ${testScore.toFixed(1)} score`);
+      console.log(`  ✅ Stratégie commencer-par-${otherLocations[i].address.substring(0, 20)}: ${testScore.toFixed(1)} score`);
       
       if (testScore < bestScore) {
         bestScore = testScore;
@@ -431,8 +431,8 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       }
     }
 
-    console.log(`🏆 Best loop score: ${bestScore.toFixed(1)} for method: ${method}`);
-    console.log(`🗺️ Optimal order: ${bestOrder.map(loc => loc.address.substring(0, 20)).join(' → ')} → ${bestOrder[0].address.substring(0, 20)}`);
+    console.log(`🏆 Meilleur score de boucle: ${bestScore.toFixed(1)} pour la méthode: ${method}`);
+    console.log(`🗺️ Ordre optimal: ${bestOrder.map(loc => loc.address.substring(0, 20)).join(' → ')} → ${bestOrder[0].address.substring(0, 20)}`);
     return bestOrder;
   }
 
@@ -700,11 +700,11 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     const cacheKey = this.generateSegmentKey(from, to, vehicleType);
     const cachedSegment = this.segmentCache.get(cacheKey);
     if (cachedSegment) {
-      console.log(`💾 Cache hit for segment: ${from.address.substring(0,20)} -> ${to.address.substring(0,20)}`);
+      console.log(`💾 Cache trouvé pour segment: ${from.address.substring(0,20)} -> ${to.address.substring(0,20)}`);
       return cachedSegment;
     }
 
-    console.log(`🌐 API call for segment: ${from.address.substring(0,20)} -> ${to.address.substring(0,20)}`);
+    console.log(`🌐 Appel API pour segment: ${from.address.substring(0,20)} -> ${to.address.substring(0,20)}`);
 
     try {
       // Use different profiles for different vehicle types
@@ -716,7 +716,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
 
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`API OSRM failed: ${response.statusText}`);
+        throw new Error(`Échec de l'API OSRM: ${response.statusText}`);
       }
 
       const data = await response.json();

@@ -33,11 +33,11 @@ export const validateConfig = () => {
   const errors: string[] = [];
 
   if (!config.mapbox.accessToken && !config.google.apiKey) {
-    errors.push('Either VITE_MAPBOX_ACCESS_TOKEN or VITE_GOOGLE_MAPS_API_KEY is required');
+    errors.push('VITE_MAPBOX_ACCESS_TOKEN ou VITE_GOOGLE_MAPS_API_KEY est requis');
   }
 
   if (errors.length > 0) {
-    console.warn('Configuration warnings:', errors);
+    console.warn('Avertissements de configuration:', errors);
   }
 
   return errors.length === 0;
