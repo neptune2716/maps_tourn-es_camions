@@ -1,6 +1,10 @@
 import { useState } from 'react';
-import { Upload, MapPin, Settings2, Play } from 'lucide-react';
-import { Location, VehicleType, OptimizationMethod } from '../types';
+import { Upload, MapPin, Settings2, Play, AlertCircle } from 'lucide-react';
+import { Location, VehicleType, OptimizationMethod, Route } from '../types';
+import { freeRoutingService } from '../services/freeRoutingService';
+import OpenStreetMapComponent from './OpenStreetMapComponent';
+import AddressAutocomplete from './AddressAutocomplete';
+import { AddressSuggestion } from '../hooks/useAddressSearch';
 
 export default function RouteOptimizer() {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -8,6 +12,9 @@ export default function RouteOptimizer() {
   const [optimizationMethod, setOptimizationMethod] = useState<OptimizationMethod>('balanced');
   const [isLoop, setIsLoop] = useState(false);
   const [newAddress, setNewAddress] = useState('');
+  const [route, setRoute] = useState<Route | undefined>();
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [calculationError, setCalculationError] = useState<string | null>(null);
 
   const addLocation = () => {
     if (newAddress.trim()) {
@@ -16,39 +23,83 @@ export default function RouteOptimizer() {
         address: newAddress.trim(),
         order: locations.length,
       };
+
       setLocations([...locations, newLocation]);
       setNewAddress('');
     }
   };
 
+  const addLocationFromSuggestion = (suggestion: AddressSuggestion) => {
+    const newLocation: Location = {
+      id: Math.random().toString(36).substr(2, 9),
+      address: suggestion.display_name,
+      coordinates: {
+        latitude: parseFloat(suggestion.lat),
+        longitude: parseFloat(suggestion.lon),
+      },
+      order: locations.length,
+    };
+
+    setLocations([...locations, newLocation]);
+    setNewAddress('');
+    
+    // Effacer la route existante car les emplacements ont changé
+    setRoute(undefined);
+  };
+
   const removeLocation = (id: string) => {
     setLocations(locations.filter(loc => loc.id !== id));
+    // Clear route if locations change
+    setRoute(undefined);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      addLocation();
+  const toggleLockLocation = (id: string) => {
+    setLocations(locations.map(loc => 
+      loc.id === id ? { ...loc, isLocked: !loc.isLocked } : loc
+    ));
+    // Clear route when locks change
+    setRoute(undefined);
+  };
+
+  const optimizeRoute = async () => {
+    if (locations.length < 2) {
+      setCalculationError('Au moins 2 emplacements sont requis');
+      return;
     }
-  };
 
-  const optimizeRoute = () => {
-    // TODO: Implement route optimization logic
-    console.log('Optimizing route with:', {
-      locations,
-      vehicleType,
-      optimizationMethod,
-      isLoop
-    });
+    setIsCalculating(true);
+    setCalculationError(null);
+
+    try {
+      const response = await freeRoutingService.calculateRoute({
+        locations,
+        vehicleType,
+        optimizationMethod,
+        isLoop,
+      });
+
+      setRoute(response.route);
+      
+      // Mettre à jour les emplacements avec l'ordre optimisé
+      setLocations(response.route.locations);
+      
+      console.log('Trajet optimisé avec succès:', response);
+    } catch (error) {
+      console.error('Échec de l\'optimisation de trajet:', error);
+      setCalculationError(error instanceof Error ? error.message : 'Impossible d\'optimiser le trajet');
+    } finally {
+      setIsCalculating(false);
+    }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Route Optimizer
+          Optimiseur de Trajets
         </h1>
         <p className="text-gray-600">
-          Add your locations and customize settings to find the optimal route
+          Ajoutez vos emplacements et personnalisez les paramètres pour trouver le trajet optimal
         </p>
       </div>
 
@@ -59,23 +110,23 @@ export default function RouteOptimizer() {
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
               <MapPin className="mr-2 h-5 w-5" />
-              Locations
+              Emplacements
             </h2>
             
             <div className="flex gap-2 mb-4">
-              <input
-                type="text"
+              <AddressAutocomplete
                 value={newAddress}
-                onChange={(e) => setNewAddress(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Enter address or GPS coordinates"
-                className="input-field flex-1"
+                onChange={setNewAddress}
+                onSelect={addLocationFromSuggestion}
+                placeholder="Rechercher une adresse (ex: Tour Eiffel, Paris)..."
+                className="flex-1"
               />
               <button
                 onClick={addLocation}
                 className="btn-primary px-6"
+                disabled={!newAddress.trim()}
               >
-                Add
+                Ajouter
               </button>
             </div>
 
@@ -93,18 +144,42 @@ export default function RouteOptimizer() {
                       key={location.id}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                     >
-                      <div className="flex items-center">
-                        <span className="w-6 h-6 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center mr-3">
+                      <div className="flex items-center flex-1">
+                        <span className={`w-6 h-6 text-white text-xs rounded-full flex items-center justify-center mr-3 ${
+                          location.isLocked ? 'bg-red-600' : 'bg-primary-600'
+                        }`}>
                           {index + 1}
                         </span>
-                        <span className="text-sm text-gray-900">{location.address}</span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-900">{location.address}</span>
+                          {location.coordinates && (
+                            <div className="text-xs text-gray-500">
+                              {location.coordinates.latitude.toFixed(4)}, {location.coordinates.longitude.toFixed(4)}
+                            </div>
+                          )}
+                          {location.isLocked && (
+                            <div className="text-xs text-red-600">🔒 Locked position</div>
+                          )}
+                        </div>
                       </div>
-                      <button
-                        onClick={() => removeLocation(location.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => toggleLockLocation(location.id)}
+                          className={`text-xs px-2 py-1 rounded ${
+                            location.isLocked 
+                              ? 'bg-red-100 text-red-800 hover:bg-red-200' 
+                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                          }`}
+                        >
+                          {location.isLocked ? 'Unlock' : 'Lock'}
+                        </button>
+                        <button
+                          onClick={() => removeLocation(location.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -172,27 +247,55 @@ export default function RouteOptimizer() {
 
             <button
               onClick={optimizeRoute}
-              disabled={locations.length < 2}
-              className="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={locations.length < 2 || isCalculating}
+              className="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              <Play className="mr-2 h-4 w-4" />
-              Optimize Route
+              {isCalculating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Calculating Route...
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Optimize Route
+                </>
+              )}
             </button>
+
+            {calculationError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center">
+                  <AlertCircle className="h-4 w-4 text-red-600 mr-2" />
+                  <span className="text-sm text-red-800">{calculationError}</span>
+                </div>
+              </div>
+            )}
+
+            {route && (
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h3 className="font-semibold text-green-900 mb-2">Route Optimized!</h3>
+                <div className="space-y-1 text-sm text-green-800">
+                  <div>Distance: {route.totalDistance.toFixed(1)} km</div>
+                  <div>Duration: {Math.round(route.totalDuration)} minutes</div>
+                  <div>Locations: {route.locations.length}</div>
+                  {route.isLoop && <div>🔄 Round trip route</div>}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right Panel - Map */}
         <div className="card">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Route Map
+            Carte du Trajet
           </h2>
-          <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-            <div className="text-center text-gray-500">
-              <MapPin className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p>Interactive map will appear here</p>
-              <p className="text-sm">Add locations and optimize to see your route</p>
-            </div>
-          </div>
+          <OpenStreetMapComponent 
+            locations={locations}
+            route={route}
+            className="h-96 rounded-lg"
+          />
         </div>
       </div>
     </div>

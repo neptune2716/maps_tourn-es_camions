@@ -46,6 +46,16 @@ export default function Layout({ children }: LayoutProps) {
               >
                 Route Optimizer
               </Link>
+              <Link
+                to="/setup"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  location.pathname === '/setup'
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600'
+                }`}
+              >
+                Setup Guide
+              </Link>
             </nav>
 
             <div className="md:hidden">

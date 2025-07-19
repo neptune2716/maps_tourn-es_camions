@@ -22,18 +22,25 @@ A web application for finding shortest routes between multiple locations, suppor
   - [x] Set up initial Git repository structure
   - [x] Create initial commit
 
-## Phase 2: Core Infrastructure
-- [ ] Map Integration
-  - [ ] Research and select mapping service (Google Maps, Mapbox, OpenStreetMap)
-  - [ ] Set up API keys and authentication
-  - [ ] Implement basic map component
-  - [ ] Add map controls (zoom, pan, etc.)
+## Phase 2: Core Infrastructure ✅ (Complete)
+- [x] Map Integration
+  - [x] Research and select mapping service (OpenStreetMap - free solution)
+  - [x] Set up free mapping service (Leaflet + OpenStreetMap)
+  - [x] Implement basic map component
+  - [x] Add map controls (zoom, pan, etc.)
 
-- [ ] Routing Engine Setup
-  - [ ] Research routing APIs (Google Directions, HERE, OSRM)
-  - [ ] Set up routing service integration
-  - [ ] Implement basic route calculation
-  - [ ] Add support for different vehicle types (car/truck)
+- [x] Routing Engine Setup
+  - [x] Research routing APIs (switched to free OSRM + Nominatim)
+  - [x] Set up routing service integration (freeRoutingService)
+  - [x] Implement basic route calculation
+  - [x] Add support for different vehicle types (car/truck)
+
+- [x] Advanced Address Input
+  - [x] Implement dynamic address autocomplete
+  - [x] Add French address disambiguation
+  - [x] Real-time suggestions with Nominatim API
+  - [x] Keyboard navigation support
+  - [x] GPS coordinate auto-retrieval
 
 - [ ] Backend API (if needed)
   - [ ] Set up backend framework (Node.js/Express, Python/Flask, etc.)
@@ -41,13 +48,13 @@ A web application for finding shortest routes between multiple locations, suppor
   - [ ] Set up API endpoints for route calculation
   - [ ] Implement CORS and security measures
 
-## Phase 3: Location Input System
-- [ ] Manual Location Entry
-  - [ ] Create location input form component
-  - [ ] Implement address validation
-  - [ ] Add GPS coordinate input support
-  - [ ] Implement autocomplete/suggestions
-  - [ ] Add location search functionality
+## Phase 3: Location Input System ⚠️ (Ready to Start)
+- [x] Manual Location Entry
+  - [x] Create location input form component
+  - [x] Implement address validation
+  - [x] Add GPS coordinate input support
+  - [x] Implement autocomplete/suggestions
+  - [x] Add location search functionality
 
 - [ ] File Upload System
   - [ ] Support CSV file upload
@@ -226,9 +233,16 @@ A web application for finding shortest routes between multiple locations, suppor
 - Database: AWS RDS or MongoDB Atlas
 
 ## Current Status
-🚀 **Project Status**: Phase 1 Complete ✅ - Moving to Phase 2 
+🚀 **Project Status**: Phase 2 Complete ✅ - Ready for Phase 3 
 📅 **Last Updated**: July 19, 2025
-🎯 **Next Milestone**: Complete Phase 2 - Core Infrastructure (Map Integration & Routing Engine)
+🎯 **Next Milestone**: Complete Phase 3 - Location Input System (File Upload & Location Management)
+
+### Recent Achievements:
+- ✅ Implemented free OpenStreetMap solution (no credit card required)
+- ✅ Created sophisticated address autocomplete with French disambiguation
+- ✅ Integrated Nominatim API for real-time address suggestions
+- ✅ Added automatic GPS coordinate retrieval for selected addresses
+- ✅ Implemented keyboard navigation and user-friendly interface
 
 ---
 *This TODO list will be updated as the project progresses to reflect the current state and priorities.*
