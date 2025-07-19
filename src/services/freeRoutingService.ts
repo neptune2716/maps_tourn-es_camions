@@ -119,7 +119,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
   private async optimizeLocationOrder(
     locations: Location[],
     method: OptimizationMethod,
-    _isLoop: boolean
+    isLoop: boolean
   ): Promise<Location[]> {
     if (locations.length <= 2) {
       return locations;
@@ -133,8 +133,16 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       return locations.sort((a, b) => (a.order || 0) - (b.order || 0));
     }
 
-    // Algorithme du plus proche voisin pour les emplacements non verrouillés
-    const optimized = await this.nearestNeighborOptimization(unlockedLocations, method);
+    // Pour des performances optimales avec l'API, utiliser une approche hybride
+    let optimized: Location[];
+    
+    if (unlockedLocations.length <= 8) {
+      // Pour peu d'emplacements, utiliser un algorithme plus sophistiqué
+      optimized = await this.advancedOptimization(unlockedLocations, method, isLoop);
+    } else {
+      // Pour beaucoup d'emplacements, utiliser l'algorithme du plus proche voisin amélioré
+      optimized = await this.nearestNeighborOptimization(unlockedLocations, method);
+    }
 
     // Fusionner avec les emplacements verrouillés
     const result: Location[] = [];
@@ -152,6 +160,116 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     return result;
   }
 
+  private async advancedOptimization(
+    locations: Location[],
+    method: OptimizationMethod,
+    isLoop: boolean
+  ): Promise<Location[]> {
+    if (locations.length <= 1) return locations;
+
+    // Essayer plusieurs permutations et garder la meilleure
+    const maxPermutations = Math.min(this.factorial(locations.length), 120); // Limiter pour les performances
+    let bestOrder = locations;
+    let bestScore = Infinity;
+
+    // Commencer par l'algorithme du plus proche voisin
+    const nearestNeighborResult = await this.nearestNeighborOptimization(locations, method);
+    const nearestScore = await this.calculateOrderScore(nearestNeighborResult, method, isLoop);
+    
+    if (nearestScore < bestScore) {
+      bestScore = nearestScore;
+      bestOrder = nearestNeighborResult;
+    }
+
+    // Essayer quelques permutations supplémentaires pour les petits ensembles
+    if (locations.length <= 6) {
+      const permutations = this.generatePermutations(locations, Math.min(maxPermutations, 20));
+      
+      for (const permutation of permutations) {
+        const score = await this.calculateOrderScore(permutation, method, isLoop);
+        if (score < bestScore) {
+          bestScore = score;
+          bestOrder = permutation;
+        }
+      }
+    }
+
+    return bestOrder;
+  }
+
+  private async calculateOrderScore(
+    locations: Location[],
+    method: OptimizationMethod,
+    isLoop: boolean
+  ): Promise<number> {
+    let totalScore = 0;
+
+    for (let i = 0; i < locations.length - 1; i++) {
+      const from = locations[i];
+      const to = locations[i + 1];
+      
+      if (!from.coordinates || !to.coordinates) continue;
+
+      const distance = this.calculateDistance(from.coordinates, to.coordinates);
+      
+      if (method === 'shortest_distance') {
+        totalScore += distance;
+      } else if (method === 'fastest_time') {
+        const estimatedSpeed = 55; // km/h
+        totalScore += (distance / estimatedSpeed) * 60; // minutes
+      } else { // balanced
+        const estimatedSpeed = 60; // km/h
+        const time = (distance / estimatedSpeed) * 60;
+        totalScore += distance * 0.6 + time * 0.4;
+      }
+    }
+
+    // Ajouter le coût du retour pour les trajets en boucle
+    if (isLoop && locations.length > 1) {
+      const first = locations[0];
+      const last = locations[locations.length - 1];
+      
+      if (first.coordinates && last.coordinates) {
+        const returnDistance = this.calculateDistance(last.coordinates, first.coordinates);
+        
+        if (method === 'shortest_distance') {
+          totalScore += returnDistance;
+        } else if (method === 'fastest_time') {
+          const estimatedSpeed = 55;
+          totalScore += (returnDistance / estimatedSpeed) * 60;
+        } else {
+          const estimatedSpeed = 60;
+          const time = (returnDistance / estimatedSpeed) * 60;
+          totalScore += returnDistance * 0.6 + time * 0.4;
+        }
+      }
+    }
+
+    return totalScore;
+  }
+
+  private generatePermutations<T>(arr: T[], maxCount: number): T[][] {
+    const result: T[][] = [];
+    
+    const permute = (current: T[], remaining: T[]) => {
+      if (result.length >= maxCount) return;
+      
+      if (remaining.length === 0) {
+        result.push([...current]);
+        return;
+      }
+
+      for (let i = 0; i < remaining.length; i++) {
+        const next = remaining[i];
+        const newRemaining = remaining.filter((_, index) => index !== i);
+        permute([...current, next], newRemaining);
+      }
+    };
+
+    permute([], arr);
+    return result.slice(0, maxCount);
+  }
+
   private async nearestNeighborOptimization(
     locations: Location[],
     method: OptimizationMethod
@@ -167,25 +285,34 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
 
     while (visited.size < locations.length) {
       let nearest: Location | null = null;
-      let nearestDistance = Infinity;
+      let bestScore = Infinity;
 
       for (const location of locations) {
         if (visited.has(location.id) || !location.coordinates || !current.coordinates) {
           continue;
         }
 
-        const distance = this.calculateDistance(current.coordinates, location.coordinates);
+        let score: number;
         
-        let score = distance;
-        if (method === 'fastest_time') {
-          score = distance * 1.2; // Estimation simple
-        } else if (method === 'balanced') {
-          score = distance * 1.1;
+        if (method === 'shortest_distance') {
+          // Optimiser uniquement sur la distance
+          score = this.calculateDistance(current.coordinates, location.coordinates);
+        } else if (method === 'fastest_time') {
+          // Optimiser sur le temps en tenant compte de la vitesse estimée
+          const distance = this.calculateDistance(current.coordinates, location.coordinates);
+          const estimatedSpeed = 50; // km/h vitesse moyenne en ville
+          score = (distance / estimatedSpeed) * 60; // temps en minutes
+        } else { // balanced
+          // Équilibrer distance et temps
+          const distance = this.calculateDistance(current.coordinates, location.coordinates);
+          const estimatedSpeed = 60; // km/h
+          const time = (distance / estimatedSpeed) * 60;
+          score = distance * 0.6 + time * 0.4; // 60% distance, 40% temps
         }
 
-        if (score < nearestDistance) {
+        if (score < bestScore) {
           nearest = location;
-          nearestDistance = score;
+          bestScore = score;
         }
       }
 
@@ -260,7 +387,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
           instructions: route.legs[0]?.steps?.map((step: any) => 
             step.maneuver?.instruction || `Continuer pendant ${(step.distance/1000).toFixed(1)}km`
           ) || [],
-          polyline: JSON.stringify(route.geometry),
+          polyline: route.geometry, // Garder la géométrie GeoJSON au lieu de la stringifier
         };
       } else {
         throw new Error('Aucun trajet trouvé');
@@ -279,7 +406,7 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
         distance,
         duration,
         instructions: [`Parcourir ${distance.toFixed(1)}km vers ${to.address}`],
-        polyline: '',
+        polyline: null, // Pas de géométrie pour les estimations
       };
     }
   }
@@ -308,6 +435,11 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
 
   private generateRouteId(): string {
     return `route_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private factorial(n: number): number {
+    if (n <= 1) return 1;
+    return n * this.factorial(n - 1);
   }
 }
 

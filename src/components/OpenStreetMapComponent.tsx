@@ -25,7 +25,7 @@ export default function OpenStreetMapComponent({
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
-  const routeLayerRef = useRef<L.Polyline | null>(null);
+  const routeLayerRef = useRef<L.LayerGroup | null>(null);
 
   // Initialize map
   useEffect(() => {
@@ -135,34 +135,61 @@ export default function OpenStreetMapComponent({
       routeLayerRef.current = null;
     }
 
-    if (!route || route.locations.length < 2) return;
+    if (!route || route.segments.length === 0) return;
 
-    // Create route line
-    const routeCoords: L.LatLngExpression[] = [];
+    // Create route from segments with real road geometry
+    const routeLayers: L.Layer[] = [];
     
-    // Add main route points
-    route.locations.forEach(location => {
-      if (location.coordinates) {
-        routeCoords.push([location.coordinates.latitude, location.coordinates.longitude]);
+    route.segments.forEach((segment, index) => {
+      if (segment.polyline && segment.polyline.coordinates) {
+        // Convertir les coordonnées GeoJSON en format Leaflet
+        const coordinates = segment.polyline.coordinates.map((coord: number[]) => 
+          [coord[1], coord[0]] as L.LatLngExpression
+        );
+        
+        if (coordinates.length > 1) {
+          const segmentLine = L.polyline(coordinates, {
+            color: index === route.segments.length - 1 && route.isLoop ? '#ef4444' : '#3b82f6', // Rouge pour le retour en boucle
+            weight: 4,
+            opacity: 0.8,
+          });
+          
+          routeLayers.push(segmentLine);
+        }
+      } else {
+        // Fallback : ligne droite si pas de géométrie disponible
+        if (segment.from.coordinates && segment.to.coordinates) {
+          const straightLine = L.polyline([
+            [segment.from.coordinates.latitude, segment.from.coordinates.longitude],
+            [segment.to.coordinates.latitude, segment.to.coordinates.longitude]
+          ], {
+            color: '#94a3b8', // Gris pour indiquer une estimation
+            weight: 2,
+            opacity: 0.6,
+            dashArray: '5, 10' // Ligne pointillée pour les estimations
+          });
+          
+          routeLayers.push(straightLine);
+        }
       }
     });
 
-    // Add return to start for loop routes
-    if (route.isLoop && route.locations.length > 0 && route.locations[0].coordinates) {
-      routeCoords.push([route.locations[0].coordinates.latitude, route.locations[0].coordinates.longitude]);
-    }
+    if (routeLayers.length > 0) {
+      // Grouper toutes les couches de route
+      const routeGroup = L.layerGroup(routeLayers).addTo(mapInstance.current);
+      routeLayerRef.current = routeGroup as any;
 
-    if (routeCoords.length > 1) {
-      const polyline = L.polyline(routeCoords, {
-        color: '#3b82f6',
-        weight: 4,
-        opacity: 0.8,
-      }).addTo(mapInstance.current);
+      // Adapter la vue pour montrer toute la route
+      const allBounds = routeLayers.reduce((bounds, layer) => {
+        if (layer instanceof L.Polyline) {
+          return bounds ? bounds.extend(layer.getBounds()) : layer.getBounds();
+        }
+        return bounds;
+      }, null as L.LatLngBounds | null);
 
-      routeLayerRef.current = polyline;
-
-      // Fit map to route
-      mapInstance.current.fitBounds(polyline.getBounds().pad(0.1));
+      if (allBounds) {
+        mapInstance.current.fitBounds(allBounds.pad(0.1));
+      }
     }
   }, [route]);
 

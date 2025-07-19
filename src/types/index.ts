@@ -27,7 +27,7 @@ export interface RouteSegment {
   distance: number; // in kilometers
   duration: number; // in minutes
   instructions: string[];
-  polyline: string; // encoded polyline for map display
+  polyline: any; // GeoJSON geometry object pour les vrais tracés de route
 }
 
 export type VehicleType = 'car' | 'truck';

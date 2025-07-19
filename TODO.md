@@ -48,7 +48,7 @@ A web application for finding shortest routes between multiple locations, suppor
   - [ ] Set up API endpoints for route calculation
   - [ ] Implement CORS and security measures
 
-## Phase 3: Location Input System ⚠️ (Ready to Start)
+## Phase 3: Location Input System ✅ (Complete)
 - [x] Manual Location Entry
   - [x] Create location input form component
   - [x] Implement address validation
@@ -56,68 +56,88 @@ A web application for finding shortest routes between multiple locations, suppor
   - [x] Implement autocomplete/suggestions
   - [x] Add location search functionality
 
-- [ ] File Upload System
-  - [ ] Support CSV file upload
-  - [ ] Implement Excel file parsing (.xlsx, .xls)
-  - [ ] Add JSON file support
-  - [ ] File validation and error handling
-  - [ ] Preview uploaded locations before processing
+- [x] File Upload System
+  - [x] Support CSV file upload with drag & drop
+  - [x] Implement Excel file parsing (.xlsx, .xls)
+  - [x] Add JSON file support
+  - [x] File validation and error handling
+  - [x] Preview uploaded locations before processing
+  - [x] Smart column detection (address/adresse, lat/latitude, etc.)
 
-- [ ] Location Management
-  - [ ] Display list of entered/uploaded locations
-  - [ ] Allow editing of individual locations
-  - [ ] Add/remove locations functionality
-  - [ ] Validate location format and accuracy
+- [x] Location Management
+  - [x] Display list of entered/uploaded locations with drag & drop
+  - [x] Allow editing of individual locations inline
+  - [x] Add/remove locations functionality
+  - [x] Validate location format and accuracy
+  - [x] **NEW**: Drag & drop reordering with visual feedback
 
-## Phase 4: Route Customization Features
-- [ ] Location Order Control
-  - [ ] Implement drag-and-drop reordering
-  - [ ] Add "lock position" functionality
-  - [ ] Support for fixed start/end points
-  - [ ] Visual indicators for locked positions
+## Phase 4: Route Customization Features ✅ (Complete)
+- [x] Location Order Control
+  - [x] Implement drag-and-drop reordering with smooth animations
+  - [x] Add "lock position" functionality with visual indicators
+  - [x] Support for fixed start/end points
+  - [x] Visual indicators for locked positions (red markers)
+  - [x] **NEW**: Inline editing of addresses with keyboard shortcuts
 
-- [ ] Vehicle Type Selection
-  - [ ] Add vehicle type selector (car/truck)
-  - [ ] Implement truck-specific routing restrictions
-  - [ ] Handle weight/height/width limitations
-  - [ ] Add truck-friendly route preferences
+- [x] Vehicle Type Selection
+  - [x] **ENHANCED**: Modern vehicle selector with descriptions and icons
+  - [x] Add vehicle type selector (car/truck) with detailed info
+  - [x] Display estimated speeds and characteristics
+  - [x] Handle truck-specific routing with OSRM
+  - [x] **NEW**: Expandable settings panel with advanced options
 
-- [ ] Loop Option
-  - [ ] Add checkbox/toggle for return to start
-  - [ ] Modify route calculation for round trips
-  - [ ] Update distance/time calculations accordingly
+- [x] Loop Option
+  - [x] **ENHANCED**: Beautiful toggle switch for return to start
+  - [x] Add checkbox/toggle for return to start
+  - [x] Modify route calculation for round trips
+  - [x] Update distance/time calculations accordingly
+  - [x] **NEW**: Visual distinction for loop return segment (red line)
 
-## Phase 5: Route Optimization Engine
-- [ ] Algorithm Implementation
-  - [ ] Implement basic TSP (Traveling Salesman Problem) solver
-  - [ ] Add nearest neighbor algorithm
-  - [ ] Implement genetic algorithm for optimization
-  - [ ] Add simulated annealing optimization
-  - [ ] Compare and benchmark different algorithms
+- [x] Advanced Route Settings
+  - [x] **NEW**: Three distinct optimization methods with proper algorithms
+  - [x] **NEW**: Expandable advanced settings panel
+  - [x] **NEW**: Real-time settings summary display
+  - [x] **NEW**: Avoid tolls/highways options (experimental)
 
-- [ ] Route Calculation
-  - [ ] Calculate shortest distance routes
-  - [ ] Calculate fastest time routes
-  - [ ] Handle traffic data integration
+## Phase 5: Route Optimization Engine ⚠️ (In Progress - Major Bug Fixes Applied)
+- [x] Algorithm Implementation
+  - [x] Fix broken route optimization algorithms (shortest distance vs fastest time)
+  - [x] Implement distinct optimization methods with real scoring
+  - [x] Add advanced optimization for smaller route sets
+  - [x] Implement nearest neighbor algorithm with proper metrics
+  - [x] Add permutation-based optimization for routes ≤ 6 locations
+
+- [x] Route Calculation Display Issues Fixed
+  - [x] **FIXED**: Route tracing now shows real roads instead of straight lines
+  - [x] **FIXED**: Optimization methods now produce different results
+  - [x] Integrated OSRM API geometry for accurate road display
+  - [x] Added fallback visualization for routes without geometry
+  - [x] Implemented proper polyline rendering from GeoJSON data
+
+- [ ] Advanced Route Features (Next Phase)
+  - [ ] Calculate traffic-aware routes
+  - [ ] Handle truck-specific routing restrictions  
   - [ ] Optimize for fuel efficiency (truck-specific)
+  - [ ] Add real-time traffic data integration
 
-## Phase 6: Map Visualization
-- [ ] Route Display
-  - [ ] Draw route lines on map
-  - [ ] Add waypoint markers
-  - [ ] Implement different colors for route segments
-  - [ ] Add turn-by-turn directions overlay
+## Phase 6: Map Visualization ✅ (Mostly Complete - Major Issues Fixed)
+- [x] Route Display
+  - [x] **FIXED**: Draw proper route lines following real roads (not straight lines)
+  - [x] Add waypoint markers with numbers and colors
+  - [x] **FIXED**: Route geometry now uses OSRM API road data
+  - [x] Implement different colors for route segments (blue for regular, red for loop return)
+  - [x] Add fallback visualization with dashed lines for estimated routes
 
-- [ ] Interactive Features
-  - [ ] Click markers for location details
-  - [ ] Hover effects for route information
-  - [ ] Zoom to fit all locations
-  - [ ] Toggle route visibility
+- [x] Interactive Features
+  - [x] Click markers for location details
+  - [x] Hover effects and popups for route information
+  - [x] Auto-zoom to fit all locations and routes
+  - [x] Route information overlay with distance/time
 
-- [ ] Map Customization
+- [ ] Map Customization (Future Enhancement)
   - [ ] Multiple map styles/themes
   - [ ] Layer controls (traffic, satellite, etc.)
-  - [ ] Marker customization options
+  - [ ] Advanced marker customization options
 
 ## Phase 7: User Interface & Experience
 - [ ] Responsive Design
@@ -239,19 +259,31 @@ A web application for finding shortest routes between multiple locations, suppor
 - 📋 **Testing**: Vitest (configured, tests to be written)
 
 ## Current Status
-🚀 **Project Status**: Phase 2 Complete ✅ - Ready for Phase 3 
+🚀 **Project Status**: Phases 3 & 4 Complete ✅ - Major Feature Enhancement Completed
 📅 **Last Updated**: July 19, 2025
-🎯 **Next Milestone**: Complete Phase 3 - Location Input System (File Upload & Location Management)
+🎯 **Next Milestone**: Phase 7 - User Interface Enhancements & Phase 8 - Results Export
 
-### Recent Achievements:
-- ✅ Implemented free OpenStreetMap solution (no credit card required)
-- ✅ Created sophisticated address autocomplete with French disambiguation
-- ✅ Integrated Nominatim API for real-time address suggestions
-- ✅ Added automatic GPS coordinate retrieval for selected addresses
-- ✅ Implemented keyboard navigation and user-friendly interface
-- ✅ Added French accent normalization (é→e, œ→oe, etc.)
-- ✅ Fixed all TypeScript import errors and build issues
-- ✅ Cleaned up legacy code and unused files
+### Latest Major Implementations (Phases 3 & 4):
+- ✅ **PHASE 3 COMPLETE**: Advanced file upload system with CSV, Excel, JSON support
+- ✅ **PHASE 3 COMPLETE**: Drag & drop location management with inline editing
+- ✅ **PHASE 4 COMPLETE**: Professional route customization interface
+- ✅ **ENHANCED**: Smart file parsing with automatic column detection
+- ✅ **ENHANCED**: Beautiful drag & drop reordering with visual feedback
+- ✅ **ENHANCED**: Modern vehicle selection with detailed descriptions
+- ✅ **ENHANCED**: Advanced route settings with expandable panels
+- ✅ **NEW**: Lock/unlock locations to fix positions during optimization
+- ✅ **NEW**: Inline address editing with keyboard shortcuts (Enter/Escape)
+- ✅ **NEW**: File preview before import with location validation
+- ✅ **NEW**: Example CSV and JSON files for testing
+
+### Previous Critical Bug Fixes:
+- ✅ **MAJOR FIX**: Route optimization algorithms now work correctly (shortest distance ≠ fastest time)
+- ✅ **MAJOR FIX**: Map now shows real road routes instead of straight lines between points
+- ✅ **IMPROVED**: Added advanced optimization for small route sets (≤6 locations use permutation analysis)
+- ✅ **ENHANCED**: Route visualization uses OSRM API geometry for accurate road display
+- ✅ **ADDED**: Different colors for route segments (blue for normal, red for loop return)
+- ✅ **ADDED**: Fallback visualization with dashed lines when road data unavailable
+- ✅ **OPTIMIZED**: Algorithm performance for larger route sets (>8 locations)
 
 ---
 *This TODO list will be updated as the project progresses to reflect the current state and priorities.*

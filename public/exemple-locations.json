@@ -1,0 +1,25 @@
+[
+  {
+    "address": "Château de Versailles",
+    "latitude": 48.8049,
+    "longitude": 2.1204
+  },
+  {
+    "address": "Disneyland Paris",
+    "latitude": 48.8674,
+    "longitude": 2.7843
+  },
+  {
+    "address": "Aéroport Charles de Gaulle",
+    "latitude": 49.0097,
+    "longitude": 2.5479
+  },
+  {
+    "address": "La Défense, Paris"
+  },
+  {
+    "address": "Bois de Vincennes",
+    "latitude": 48.8280,
+    "longitude": 2.4325
+  }
+]
