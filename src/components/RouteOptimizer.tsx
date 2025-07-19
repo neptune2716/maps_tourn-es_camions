@@ -288,7 +288,7 @@ export default function RouteOptimizer() {
           <div className="col-span-9">
             <div className="grid grid-cols-12 gap-4 h-full">
               {/* Middle Panel - Paramètres (4/12 of remaining 9 columns) */}
-              <div className="col-span-4">
+              <div className="col-span-4 space-y-4">
                 <div className="card h-fit">
                   <div className="flex items-center mb-4">
                     <Settings2 className="mr-2 h-5 w-5" />
@@ -480,12 +480,12 @@ export default function RouteOptimizer() {
                 </div>
               </div>
 
-              {/* Wide Route Details Section - Spans both middle and right columns */}
+              {/* Wide Route Details Section - Perfectly aligned with Résultats */}
               {route && (
-                <div className="col-span-12 mt-4">
+                <div className="col-span-12">
                   <div className="card">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails du Trajet</h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-3" style={{ height: '150px', overflowY: 'auto' }}>
                       {route.segments.map((segment, index) => (
                         <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                           <div className="flex items-center space-x-2 min-w-0 flex-1">
