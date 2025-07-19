@@ -148,20 +148,20 @@ export default function LocationList({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 scrollbar-thin">
       {/* Status indicator */}
       <div className="text-xs text-gray-500 mb-2 flex items-center justify-between">
         <div className="flex items-center">
           <GripVertical className="h-3 w-3 mr-1" />
-          Glissez-déposez pour réorganiser
+          Réorganiser
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-green-600">
-            ✓ {locations.filter(loc => loc.coordinates).length} géocodée(s)
+          <span className="text-green-600 text-xs">
+            ✓ {locations.filter(loc => loc.coordinates).length}
           </span>
           {locations.some(loc => !loc.coordinates) && (
-            <span className="text-amber-600">
-              ⚠ {locations.filter(loc => !loc.coordinates).length} à résoudre
+            <span className="text-amber-600 text-xs">
+              ⚠ {locations.filter(loc => !loc.coordinates).length}
             </span>
           )}
         </div>
@@ -183,7 +183,7 @@ export default function LocationList({
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, index)}
             className={`
-              flex items-center p-3 rounded-lg border transition-all duration-200
+              flex items-center p-2.5 rounded-lg border transition-all duration-200
               ${isDragging ? 'opacity-50 scale-95' : ''}
               ${isDragOver ? 'border-blue-400 bg-blue-50 transform scale-105' : 
                 !location.coordinates ? 'border-amber-200 bg-amber-50' :
@@ -192,12 +192,12 @@ export default function LocationList({
             `}
           >
             {/* Drag Handle & Order Number */}
-            <div className="flex items-center mr-3">
+            <div className="flex items-center mr-2">
               {!location.isLocked && !isEditing && (
-                <GripVertical className="h-4 w-4 text-gray-400 mr-2" />
+                <GripVertical className="h-3 w-3 text-gray-400 mr-1" />
               )}
               <span className={`
-                w-6 h-6 text-white text-xs rounded-full flex items-center justify-center font-medium
+                w-5 h-5 text-white text-xs rounded-full flex items-center justify-center font-medium
                 ${location.isLocked ? 'bg-red-600' : 'bg-blue-600'}
               `}>
                 {index + 1}
@@ -214,50 +214,43 @@ export default function LocationList({
                     onSelect={saveEditFromSuggestion}
                     onEscape={cancelEdit}
                     onEnterWithoutSelection={saveEdit}
+                    onBlur={cancelEdit}
                     placeholder="Modifier l'adresse..."
                     className="w-full text-sm"
                   />
                   <div className="text-xs text-gray-500 mt-1">
-                    Entrée pour sauvegarder • Échap pour annuler
+                    Entrée: sauvegarder • Échap: annuler • Clic extérieur: annuler
                   </div>
                 </div>
               ) : (
                 <div>
                   <div className="flex items-center">
-                    <span className="text-sm text-gray-900 block truncate">
+                    <span className="text-sm text-gray-900 block truncate font-medium">
                       {location.address}
                     </span>
                     {!location.coordinates && (
-                      <div className="relative group">
-                        <AlertTriangle className="h-4 w-4 text-amber-500 ml-2 flex-shrink-0" />
-                        <div className="absolute bottom-6 left-0 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                          Adresse non géocodée
-                        </div>
-                      </div>
+                      <AlertTriangle className="h-3 w-3 text-amber-500 ml-1 flex-shrink-0" />
                     )}
                   </div>
                   {location.coordinates ? (
                     <div className="text-xs text-gray-500">
-                      📍 {location.coordinates.latitude.toFixed(4)}, {location.coordinates.longitude.toFixed(4)}
+                      📍 {location.coordinates.latitude.toFixed(3)}, {location.coordinates.longitude.toFixed(3)}
                     </div>
                   ) : (
                     <div className="text-xs text-amber-600 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Adresse non trouvée
-                      </div>
+                      <span>Adresse non trouvée</span>
                       <button
                         onClick={() => startEdit(location)}
-                        className="text-blue-600 hover:text-blue-800 underline text-xs ml-2"
+                        className="text-blue-600 hover:text-blue-800 underline text-xs"
                       >
                         Résoudre
                       </button>
                     </div>
                   )}
                   {location.isLocked && (
-                    <div className="text-xs text-red-600 flex items-center mt-1">
+                    <div className="text-xs text-red-600 flex items-center">
                       <Lock className="h-3 w-3 mr-1" />
-                      Position verrouillée
+                      Verrouillé
                     </div>
                   )}
                 </div>
@@ -265,15 +258,15 @@ export default function LocationList({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center space-x-1 ml-2">
+            <div className="flex items-center space-x-1 ml-1">
               {!isEditing && (
                 <>
                   <button
                     onClick={() => startEdit(location)}
                     className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                    title="Modifier l'adresse"
+                    title="Modifier"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3 w-3" />
                   </button>
                   
                   <button
@@ -283,17 +276,17 @@ export default function LocationList({
                         ? 'text-red-600 hover:text-red-800' 
                         : 'text-gray-400 hover:text-orange-600'
                     }`}
-                    title={location.isLocked ? 'Déverrouiller la position' : 'Verrouiller la position'}
+                    title={location.isLocked ? 'Déverrouiller' : 'Verrouiller'}
                   >
-                    {location.isLocked ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
+                    {location.isLocked ? <Lock className="h-3 w-3" /> : <LockOpen className="h-3 w-3" />}
                   </button>
 
                   <button
                     onClick={() => onLocationDelete(location.id)}
                     className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Supprimer cet emplacement"
+                    title="Supprimer"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </button>
                 </>
               )}
@@ -301,11 +294,6 @@ export default function LocationList({
           </div>
         );
       })}
-      
-      {/* Instructions */}
-      <div className="text-xs text-gray-400 italic mt-3">
-        💡 Astuce: Verrouillez un emplacement pour le fixer à sa position actuelle lors de l'optimisation
-      </div>
     </div>
   );
 }

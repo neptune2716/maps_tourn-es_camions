@@ -8,6 +8,7 @@ interface AddressAutocompleteProps {
   onSelect: (suggestion: AddressSuggestion) => void;
   onEscape?: () => void;
   onEnterWithoutSelection?: () => void;
+  onBlur?: () => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -19,6 +20,7 @@ export default function AddressAutocomplete({
   onSelect,
   onEscape,
   onEnterWithoutSelection,
+  onBlur,
   placeholder = "Rechercher une adresse...",
   className = "",
   disabled = false
@@ -30,6 +32,15 @@ export default function AddressAutocomplete({
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   const { suggestions, isLoading, error, searchAddresses, clearSuggestions } = useAddressSearch();
+
+  // Fonction pour gérer la fermeture et le callback onBlur
+  const handleBlurAction = () => {
+    setIsOpen(false);
+    setSelectedIndex(-1);
+    if (onBlur) {
+      onBlur();
+    }
+  };
 
   // Recherche avec debounce
   useEffect(() => {
@@ -58,14 +69,13 @@ export default function AddressAutocomplete({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSelectedIndex(-1);
+        handleBlurAction();
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [onBlur]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -218,6 +228,13 @@ export default function AddressAutocomplete({
             if (suggestions.length > 0) {
               setIsOpen(true);
             }
+          }}
+          onBlur={() => {
+            // Add a small delay to allow click events on suggestions to fire first
+            // The click-outside handler will handle immediate outside clicks without delay
+            setTimeout(() => {
+              handleBlurAction();
+            }, 150);
           }}
           placeholder={placeholder}
           disabled={disabled}

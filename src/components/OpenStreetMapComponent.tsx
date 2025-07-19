@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { AlertTriangle } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Location, Route } from '../types/index.ts';
@@ -231,23 +230,6 @@ export default function OpenStreetMapComponent({
             <p className="text-gray-600 text-center">
               Ajoutez des emplacements pour les voir sur la carte
             </p>
-          </div>
-        </div>
-      )}
-
-      {/* Ungeocoded locations warning */}
-      {locations.length > 0 && locations.some(loc => !loc.coordinates) && (
-        <div className="absolute top-16 left-4 bg-amber-50 border border-amber-200 rounded-lg p-3 shadow-lg z-[1000] max-w-xs">
-          <div className="flex items-center">
-            <AlertTriangle className="h-4 w-4 text-amber-600 mr-2" />
-            <div className="text-sm">
-              <div className="font-medium text-amber-800">
-                {locations.filter(loc => !loc.coordinates).length} adresse(s) non localisée(s)
-              </div>
-              <div className="text-xs text-amber-700 mt-1">
-                Ces emplacements n'apparaissent pas sur la carte
-              </div>
-            </div>
           </div>
         </div>
       )}

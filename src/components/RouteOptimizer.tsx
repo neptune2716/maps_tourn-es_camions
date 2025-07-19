@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, MapPin, Play, AlertCircle } from 'lucide-react';
+import { Upload, MapPin, Play, AlertCircle, AlertTriangle } from 'lucide-react';
 import { Location, VehicleType, OptimizationMethod, Route } from '../types/index.ts';
 import { freeRoutingService } from '../services/freeRoutingService.ts';
 import OpenStreetMapComponent from './OpenStreetMapComponent.tsx';
@@ -133,160 +133,225 @@ export default function RouteOptimizer() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Optimiseur de Trajets
-        </h1>
-        <p className="text-gray-600">
-          Ajoutez vos emplacements et personnalisez les paramètres pour trouver le trajet optimal
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Optimiseur de Trajets
+          </h1>
+          <p className="text-gray-600">
+            Ajoutez vos emplacements et personnalisez les paramètres pour trouver le trajet optimal
+          </p>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Left Panel - Input and Settings */}
-        <div className="space-y-6">
-          {/* Location Input */}
-          <div className="card">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <MapPin className="mr-2 h-5 w-5" />
-              Emplacements
-            </h2>
-            
-            <div className="flex gap-2 mb-4">
-              <AddressAutocomplete
-                value={newAddress}
-                onChange={setNewAddress}
-                onSelect={addLocationFromSuggestion}
-                placeholder="Rechercher une adresse (ex: Tour Eiffel, Paris)..."
-                className="flex-1"
-              />
-              <button
-                onClick={addLocation}
-                className="btn-primary px-6"
-                disabled={!newAddress.trim()}
-              >
-                Ajouter
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Panel - Location Input (1/3 width) */}
+          <div className="lg:col-span-1">
+            <div className="card sticky top-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <MapPin className="mr-2 h-5 w-5" />
+                Emplacements
+              </h2>
+              
+              <div className="flex gap-2 mb-4">
+                <AddressAutocomplete
+                  value={newAddress}
+                  onChange={setNewAddress}
+                  onSelect={addLocationFromSuggestion}
+                  placeholder="Rechercher une adresse..."
+                  className="flex-1"
+                />
+                <button
+                  onClick={addLocation}
+                  className="btn-primary px-4"
+                  disabled={!newAddress.trim()}
+                >
+                  +
+                </button>
+              </div>
 
-            <div className="border border-gray-200 rounded-lg p-4 min-h-[200px]">
-              <LocationList
-                locations={locations}
-                onLocationUpdate={handleLocationUpdate}
-                onLocationEdit={handleLocationEdit}
-                onLocationDelete={removeLocation}
-                onLocationLock={toggleLockLocation}
-              />
-            </div>
+              <div className="border border-gray-200 rounded-lg p-3 max-h-80 overflow-y-auto mb-4">
+                <LocationList
+                  locations={locations}
+                  onLocationUpdate={handleLocationUpdate}
+                  onLocationEdit={handleLocationEdit}
+                  onLocationDelete={removeLocation}
+                  onLocationLock={toggleLockLocation}
+                />
+              </div>
 
-            <div className="mt-4">
-              <button 
-                onClick={() => setShowFileUpload(true)}
-                className="btn-secondary w-full"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                Importer un fichier (CSV, Excel, JSON)
-              </button>
-            </div>
-          </div>
+              <div className="space-y-3">
+                <button 
+                  onClick={() => setShowFileUpload(true)}
+                  className="btn-secondary w-full text-sm flex items-center justify-center"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Importer fichier
+                </button>
 
-          {/* Settings */}
-          <RouteSettings
-            vehicleType={vehicleType}
-            optimizationMethod={optimizationMethod}
-            isLoop={isLoop}
-            onVehicleTypeChange={setVehicleType}
-            onOptimizationMethodChange={setOptimizationMethod}
-            onLoopChange={setIsLoop}
-          />
+                {/* Optimize Button - Now inside the location box */}
+                <div className="pt-3 border-t border-gray-200">
+                  <button
+                    onClick={optimizeRoute}
+                    disabled={
+                      locations.length < 2 || 
+                      isCalculating || 
+                      locations.some(loc => !loc.coordinates)
+                    }
+                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {isCalculating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Calcul en cours...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="mr-2 h-4 w-4" />
+                        Optimiser le Trajet
+                      </>
+                    )}
+                  </button>
 
-          {/* Optimize Button & Results */}
-          <div className="card">
-            <button
-              onClick={optimizeRoute}
-              disabled={
-                locations.length < 2 || 
-                isCalculating || 
-                locations.some(loc => !loc.coordinates)
-              }
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isCalculating ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Calculating Route...
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Optimize Route
                   {locations.some(loc => !loc.coordinates) && (
-                    <span className="ml-2 text-xs opacity-75">
-                      (Résolvez d'abord les adresses)
-                    </span>
+                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded mt-2">
+                      ⚠️ Certaines adresses doivent être géocodées
+                    </div>
                   )}
-                </>
-              )}
-            </button>
 
-            {calculationError && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-start">
-                  <AlertCircle className="h-4 w-4 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-red-800">
-                    <div className="font-medium mb-1">Impossible de calculer l'itinéraire</div>
-                    <div className="whitespace-pre-line">{calculationError}</div>
-                  </div>
+                  {calculationError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg mt-2">
+                      <div className="flex items-start">
+                        <AlertCircle className="h-4 w-4 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-red-800">
+                          <div className="font-medium mb-1">Erreur</div>
+                          <div className="whitespace-pre-line">{calculationError}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
+          </div>
 
-            {route && (
-              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h3 className="font-semibold text-green-900 mb-2">Route Optimized!</h3>
-                <div className="space-y-1 text-sm text-green-800">
-                  <div>Distance: {route.totalDistance.toFixed(1)} km</div>
-                  <div>Duration: {Math.round(route.totalDuration)} minutes</div>
-                  <div>Locations: {route.locations.length}</div>
-                  <div>Vehicle: <span className="capitalize">{route.vehicleType}</span></div>
-                  <div>Method: <span className="capitalize">{route.optimizationMethod.replace('_', ' ')}</span></div>
-                  {route.isLoop && <div>🔄 Round trip route</div>}
-                </div>
-                
-                {/* Detailed route breakdown */}
-                <details className="mt-3">
-                  <summary className="cursor-pointer text-sm font-medium text-green-900 hover:text-green-700">
-                    Show detailed breakdown
-                  </summary>
-                  <div className="mt-2 space-y-1 text-xs">
-                    {route.segments.map((segment, index) => (
-                      <div key={index} className="flex justify-between items-center py-1 border-b border-green-200 last:border-b-0">
-                        <span className="truncate mr-2">
-                          {segment.from.address} → {segment.to.address}
-                        </span>
-                        <span className="text-green-700 whitespace-nowrap">
-                          {segment.distance.toFixed(1)}km • {Math.round(segment.duration)}min
-                        </span>
-                      </div>
-                    ))}
+          {/* Right Panel - Map and Results (2/3 width) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Map */}
+            <div className="card relative">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Carte du Trajet
+                </h2>
+                {route && (
+                  <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                    {route.totalDistance.toFixed(1)} km • {Math.round(route.totalDuration)} min
                   </div>
-                </details>
+                )}
+              </div>
+              
+              {/* Map notifications - positioned to avoid zoom controls */}
+              {locations.filter(loc => !loc.coordinates).length > 0 && (
+                <div className="map-notification bg-amber-100 border border-amber-300 rounded-lg p-3 shadow-lg">
+                  <div className="flex items-start">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-amber-800">
+                      <div className="font-medium mb-1">
+                        {locations.filter(loc => !loc.coordinates).length} adresse(s) non localisée(s)
+                      </div>
+                      <div className="text-xs">
+                        Ces emplacements n'apparaissent pas sur la carte
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <OpenStreetMapComponent 
+                locations={locations}
+                route={route}
+                className="h-[500px] rounded-lg"
+              />
+            </div>
+
+            {/* Settings and Quick Results */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Settings */}
+              <div className="space-y-4">
+                <RouteSettings
+                  vehicleType={vehicleType}
+                  optimizationMethod={optimizationMethod}
+                  isLoop={isLoop}
+                  onVehicleTypeChange={setVehicleType}
+                  onOptimizationMethodChange={setOptimizationMethod}
+                  onLoopChange={setIsLoop}
+                />
+              </div>
+
+              {/* Quick Results Display */}
+              {route && (
+                <div className="card">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Résultats</h3>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <div className="font-medium text-blue-900">Distance</div>
+                        <div className="text-blue-700">{route.totalDistance.toFixed(1)} km</div>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <div className="font-medium text-green-900">Durée</div>
+                        <div className="text-green-700">{Math.round(route.totalDuration)} min</div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <div>🚗 Véhicule: <span className="capitalize">{route.vehicleType}</span></div>
+                      <div>⚡ Méthode: <span className="capitalize">{route.optimizationMethod.replace('_', ' ')}</span></div>
+                      <div>📍 Arrêts: {route.locations.length}</div>
+                      {route.isLoop && <div>🔄 Trajet en boucle</div>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Detailed Route Breakdown */}
+            {route && (
+              <div className="card">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Détails du Trajet</h3>
+                <div className="space-y-2">
+                  {route.segments.map((segment, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm text-gray-900">
+                            {segment.from.address}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            → {segment.to.address}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          {segment.distance.toFixed(1)} km
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {Math.round(segment.duration)} min
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Right Panel - Map */}
-        <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Carte du Trajet
-          </h2>
-          <OpenStreetMapComponent 
-            locations={locations}
-            route={route}
-            className="h-96 rounded-lg"
-          />
         </div>
       </div>
 
