@@ -81,8 +81,12 @@ export default function RouteOptimizer() {
     setRoute(undefined);
   };
 
-  const handleFileUpload = (uploadedLocations: Location[]) => {
-    setLocations(prev => [...prev, ...uploadedLocations]);
+  const handleFileUpload = (uploadedLocations: Location[], replaceExisting: boolean) => {
+    if (replaceExisting) {
+      setLocations(uploadedLocations);
+    } else {
+      setLocations(prev => [...prev, ...uploadedLocations]);
+    }
     setRoute(undefined);
     setShowFileUpload(false);
   };
@@ -291,6 +295,7 @@ export default function RouteOptimizer() {
         <FileUpload
           onLocationsLoaded={handleFileUpload}
           onClose={() => setShowFileUpload(false)}
+          existingLocationsCount={locations.length}
         />
       )}
     </div>

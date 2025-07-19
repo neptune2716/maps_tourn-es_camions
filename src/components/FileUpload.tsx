@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileText, AlertCircle, X } from 'lucide-react';
+import { Upload, FileText, AlertCircle, X, Plus, RefreshCw } from 'lucide-react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { Location } from '../types/index.ts';
 
 interface FileUploadProps {
-  onLocationsLoaded: (locations: Location[]) => void;
+  onLocationsLoaded: (locations: Location[], replaceExisting: boolean) => void;
   onClose: () => void;
+  existingLocationsCount: number;
 }
 
 interface ParsedLocation {
@@ -28,11 +29,12 @@ interface ParsedLocation {
   [key: string]: any; // Pour permettre d'autres propriétés dynamiques
 }
 
-export default function FileUpload({ onLocationsLoaded, onClose }: FileUploadProps) {
+export default function FileUpload({ onLocationsLoaded, onClose, existingLocationsCount }: FileUploadProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<Location[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
 
   const processFile = useCallback(async (file: File) => {
     setIsProcessing(true);
@@ -183,7 +185,7 @@ export default function FileUpload({ onLocationsLoaded, onClose }: FileUploadPro
   });
 
   const handleConfirmUpload = () => {
-    onLocationsLoaded(preview);
+    onLocationsLoaded(preview, importMode === 'replace');
     onClose();
   };
 
@@ -226,6 +228,51 @@ export default function FileUpload({ onLocationsLoaded, onClose }: FileUploadPro
               ))}
             </div>
           </div>
+
+          {/* Import Mode Selection */}
+          {existingLocationsCount > 0 && (
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="text-sm font-medium text-amber-800 mb-3">
+                Vous avez déjà {existingLocationsCount} emplacement(s) dans votre liste.
+              </div>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="importMode"
+                    value="replace"
+                    checked={importMode === 'replace'}
+                    onChange={(e) => setImportMode(e.target.value as 'replace' | 'append')}
+                    className="mr-2"
+                  />
+                  <RefreshCw className="h-4 w-4 mr-2 text-red-600" />
+                  <span className="text-sm">
+                    <strong>Remplacer</strong> - Supprimer tous les emplacements existants et utiliser uniquement ceux du fichier
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="importMode"
+                    value="append"
+                    checked={importMode === 'append'}
+                    onChange={(e) => setImportMode(e.target.value as 'replace' | 'append')}
+                    className="mr-2"
+                  />
+                  <Plus className="h-4 w-4 mr-2 text-green-600" />
+                  <span className="text-sm">
+                    <strong>Ajouter</strong> - Conserver les emplacements existants et ajouter ceux du fichier
+                  </span>
+                </label>
+              </div>
+              <div className="text-xs text-amber-700 mt-2">
+                {importMode === 'replace' 
+                  ? `Résultat: ${preview.length} emplacements au total`
+                  : `Résultat: ${existingLocationsCount + preview.length} emplacements au total`
+                }
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-between">
             <button
