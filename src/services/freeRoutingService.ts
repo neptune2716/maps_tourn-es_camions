@@ -13,16 +13,21 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
     const startTime = Date.now();
     
     try {
-      // S'assurer que tous les emplacements ont des coordonnées
-      const locationsWithCoords = await this.ensureCoordinates(request.locations);
-      
-      if (locationsWithCoords.length < 2) {
+      // Vérifier que tous les emplacements ont des coordonnées
+      const missingCoordinates = request.locations.filter(loc => !loc.coordinates);
+      if (missingCoordinates.length > 0) {
+        throw new Error(
+          `Les emplacements suivants n'ont pas de coordonnées : ${missingCoordinates.map(loc => loc.address).join(', ')}`
+        );
+      }
+
+      if (request.locations.length < 2) {
         throw new Error('Au moins 2 emplacements sont requis pour calculer un trajet');
       }
 
-      // Optimiser l'ordre des emplacements
+      // Tous les emplacements ont des coordonnées, procéder à l'optimisation
       const optimizedLocations = await this.optimizeLocationOrder(
-        locationsWithCoords,
+        request.locations,
         request.optimizationMethod,
         request.isLoop
       );
@@ -89,31 +94,6 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
       console.error('Échec du géocodage:', error);
       return null;
     }
-  }
-
-  private async ensureCoordinates(locations: Location[]): Promise<Location[]> {
-    const locationsWithCoords: Location[] = [];
-
-    for (const location of locations) {
-      if (location.coordinates) {
-        locationsWithCoords.push(location);
-      } else {
-        // Essayer de géocoder l'adresse
-        console.log(`Géocodage de: ${location.address}`);
-        const coords = await this.geocodeAddress(location.address);
-        if (coords) {
-          locationsWithCoords.push({
-            ...location,
-            coordinates: coords,
-          });
-          console.log(`✓ Géocodé: ${location.address} -> ${coords.latitude}, ${coords.longitude}`);
-        } else {
-          console.warn(`✗ Impossible de géocoder: ${location.address}`);
-        }
-      }
-    }
-
-    return locationsWithCoords;
   }
 
   private async optimizeLocationOrder(

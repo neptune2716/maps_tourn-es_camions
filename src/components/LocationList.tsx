@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
-import { Lock, LockOpen, GripVertical, X, Edit, MapPin } from 'lucide-react';
+import { Lock, LockOpen, GripVertical, X, Edit, MapPin, AlertTriangle } from 'lucide-react';
 import { Location } from '../types/index.ts';
+import AddressAutocomplete from './AddressAutocomplete.tsx';
+import { AddressSuggestion } from '../hooks/useAddressSearch.ts';
 
 interface LocationListProps {
   locations: Location[];
   onLocationUpdate: (locations: Location[]) => void;
-  onLocationEdit: (id: string, newAddress: string) => void;
+  onLocationEdit: (id: string, newAddress: string, coordinates?: { latitude: number; longitude: number }) => void;
   onLocationDelete: (id: string) => void;
   onLocationLock: (id: string) => void;
 }
@@ -118,17 +120,21 @@ export default function LocationList({
     setEditValue('');
   };
 
-  const cancelEdit = () => {
+  const saveEditFromSuggestion = (suggestion: AddressSuggestion) => {
+    if (editingId) {
+      // Sauvegarder avec les coordonnées de la suggestion
+      onLocationEdit(editingId, suggestion.display_name, {
+        latitude: parseFloat(suggestion.lat),
+        longitude: parseFloat(suggestion.lon),
+      });
+    }
     setEditingId(null);
     setEditValue('');
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      saveEdit();
-    } else if (e.key === 'Escape') {
-      cancelEdit();
-    }
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditValue('');
   };
 
   if (locations.length === 0) {
@@ -143,9 +149,22 @@ export default function LocationList({
 
   return (
     <div className="space-y-2">
-      <div className="text-xs text-gray-500 mb-2 flex items-center">
-        <GripVertical className="h-3 w-3 mr-1" />
-        Glissez-déposez pour réorganiser • Les emplacements verrouillés ne peuvent pas être déplacés
+      {/* Status indicator */}
+      <div className="text-xs text-gray-500 mb-2 flex items-center justify-between">
+        <div className="flex items-center">
+          <GripVertical className="h-3 w-3 mr-1" />
+          Glissez-déposez pour réorganiser
+        </div>
+        <div className="flex items-center space-x-2">
+          <span className="text-green-600">
+            ✓ {locations.filter(loc => loc.coordinates).length} géocodée(s)
+          </span>
+          {locations.some(loc => !loc.coordinates) && (
+            <span className="text-amber-600">
+              ⚠ {locations.filter(loc => !loc.coordinates).length} à résoudre
+            </span>
+          )}
+        </div>
       </div>
       
       {locations.map((location, index) => {
@@ -166,8 +185,9 @@ export default function LocationList({
             className={`
               flex items-center p-3 rounded-lg border transition-all duration-200
               ${isDragging ? 'opacity-50 scale-95' : ''}
-              ${isDragOver ? 'border-blue-400 bg-blue-50 transform scale-105' : 'border-gray-200 bg-gray-50'}
-              ${location.isLocked ? 'bg-red-50 border-red-200' : ''}
+              ${isDragOver ? 'border-blue-400 bg-blue-50 transform scale-105' : 
+                !location.coordinates ? 'border-amber-200 bg-amber-50' :
+                location.isLocked ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}
               ${!location.isLocked && !isEditing ? 'cursor-move hover:bg-gray-100' : ''}
             `}
           >
@@ -187,23 +207,51 @@ export default function LocationList({
             {/* Address Display/Edit */}
             <div className="flex-1 min-w-0">
               {isEditing ? (
-                <input
-                  type="text"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  onBlur={saveEdit}
-                  autoFocus
-                  className="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <AddressAutocomplete
+                    value={editValue}
+                    onChange={setEditValue}
+                    onSelect={saveEditFromSuggestion}
+                    onEscape={cancelEdit}
+                    onEnterWithoutSelection={saveEdit}
+                    placeholder="Modifier l'adresse..."
+                    className="w-full text-sm"
+                  />
+                  <div className="text-xs text-gray-500 mt-1">
+                    Entrée pour sauvegarder • Échap pour annuler
+                  </div>
+                </div>
               ) : (
                 <div>
-                  <span className="text-sm text-gray-900 block truncate">
-                    {location.address}
-                  </span>
-                  {location.coordinates && (
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-900 block truncate">
+                      {location.address}
+                    </span>
+                    {!location.coordinates && (
+                      <div className="relative group">
+                        <AlertTriangle className="h-4 w-4 text-amber-500 ml-2 flex-shrink-0" />
+                        <div className="absolute bottom-6 left-0 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                          Adresse non géocodée
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {location.coordinates ? (
                     <div className="text-xs text-gray-500">
-                      {location.coordinates.latitude.toFixed(4)}, {location.coordinates.longitude.toFixed(4)}
+                      📍 {location.coordinates.latitude.toFixed(4)}, {location.coordinates.longitude.toFixed(4)}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-amber-600 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Adresse non trouvée
+                      </div>
+                      <button
+                        onClick={() => startEdit(location)}
+                        className="text-blue-600 hover:text-blue-800 underline text-xs ml-2"
+                      >
+                        Résoudre
+                      </button>
                     </div>
                   )}
                   {location.isLocked && (

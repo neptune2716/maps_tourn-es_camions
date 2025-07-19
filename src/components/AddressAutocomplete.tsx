@@ -6,6 +6,8 @@ interface AddressAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   onSelect: (suggestion: AddressSuggestion) => void;
+  onEscape?: () => void;
+  onEnterWithoutSelection?: () => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -15,6 +17,8 @@ export default function AddressAutocomplete({
   value,
   onChange,
   onSelect,
+  onEscape,
+  onEnterWithoutSelection,
   placeholder = "Rechercher une adresse...",
   className = "",
   disabled = false
@@ -70,10 +74,9 @@ export default function AddressAutocomplete({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || suggestions.length === 0) return;
-
     switch (e.key) {
       case 'ArrowDown':
+        if (!isOpen || suggestions.length === 0) return;
         e.preventDefault();
         setSelectedIndex(prev => 
           prev < suggestions.length - 1 ? prev + 1 : 0
@@ -81,6 +84,7 @@ export default function AddressAutocomplete({
         break;
       
       case 'ArrowUp':
+        if (!isOpen || suggestions.length === 0) return;
         e.preventDefault();
         setSelectedIndex(prev => 
           prev > 0 ? prev - 1 : suggestions.length - 1
@@ -89,15 +93,22 @@ export default function AddressAutocomplete({
       
       case 'Enter':
         e.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+        if (isOpen && selectedIndex >= 0 && selectedIndex < suggestions.length) {
           handleSelectSuggestion(suggestions[selectedIndex]);
+        } else if (onEnterWithoutSelection) {
+          onEnterWithoutSelection();
         }
         break;
       
       case 'Escape':
+        e.preventDefault();
         setIsOpen(false);
         setSelectedIndex(-1);
-        inputRef.current?.blur();
+        if (onEscape) {
+          onEscape();
+        } else {
+          inputRef.current?.blur();
+        }
         break;
     }
   };

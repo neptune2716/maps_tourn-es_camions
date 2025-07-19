@@ -70,9 +70,13 @@ export default function RouteOptimizer() {
     setRoute(undefined);
   };
 
-  const handleLocationEdit = (id: string, newAddress: string) => {
+  const handleLocationEdit = (id: string, newAddress: string, coordinates?: { latitude: number; longitude: number }) => {
     setLocations(locations.map(loc =>
-      loc.id === id ? { ...loc, address: newAddress, coordinates: undefined } : loc
+      loc.id === id ? { 
+        ...loc, 
+        address: newAddress, 
+        coordinates: coordinates || undefined // Garder les coordonnées si fournies, sinon les supprimer
+      } : loc
     ));
     setRoute(undefined);
   };
@@ -86,6 +90,16 @@ export default function RouteOptimizer() {
   const optimizeRoute = async () => {
     if (locations.length < 2) {
       setCalculationError('Au moins 2 emplacements sont requis');
+      return;
+    }
+
+    // Vérifier que tous les emplacements ont des coordonnées
+    const ungeocoded = locations.filter(loc => !loc.coordinates);
+    if (ungeocoded.length > 0) {
+      setCalculationError(
+        `${ungeocoded.length} adresse(s) ne sont pas géocodées. Veuillez résoudre ces adresses avant de calculer l'itinéraire :\n` +
+        ungeocoded.map(loc => `• ${loc.address}`).join('\n')
+      );
       return;
     }
 
@@ -187,7 +201,11 @@ export default function RouteOptimizer() {
           <div className="card">
             <button
               onClick={optimizeRoute}
-              disabled={locations.length < 2 || isCalculating}
+              disabled={
+                locations.length < 2 || 
+                isCalculating || 
+                locations.some(loc => !loc.coordinates)
+              }
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isCalculating ? (
@@ -199,15 +217,23 @@ export default function RouteOptimizer() {
                 <>
                   <Play className="mr-2 h-4 w-4" />
                   Optimize Route
+                  {locations.some(loc => !loc.coordinates) && (
+                    <span className="ml-2 text-xs opacity-75">
+                      (Résolvez d'abord les adresses)
+                    </span>
+                  )}
                 </>
               )}
             </button>
 
             {calculationError && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center">
-                  <AlertCircle className="h-4 w-4 text-red-600 mr-2" />
-                  <span className="text-sm text-red-800">{calculationError}</span>
+                <div className="flex items-start">
+                  <AlertCircle className="h-4 w-4 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-800">
+                    <div className="font-medium mb-1">Impossible de calculer l'itinéraire</div>
+                    <div className="whitespace-pre-line">{calculationError}</div>
+                  </div>
                 </div>
               </div>
             )}

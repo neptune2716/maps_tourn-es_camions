@@ -272,9 +272,13 @@ A web application for finding shortest routes between multiple locations, suppor
 - ✅ **ENHANCED**: Modern vehicle selection with detailed descriptions
 - ✅ **ENHANCED**: Advanced route settings with expandable panels
 - ✅ **NEW**: Lock/unlock locations to fix positions during optimization
-- ✅ **NEW**: Inline address editing with keyboard shortcuts (Enter/Escape)
+- ✅ **NEW**: Inline address editing with autocomplete and keyboard shortcuts (Enter/Escape)
 - ✅ **NEW**: File preview before import with location validation
 - ✅ **NEW**: Example CSV and JSON files for testing
+- ✅ **CRITICAL FIX**: Route calculation now requires all addresses to be geocoded first
+- ✅ **ENHANCED**: Clear visual indicators for ungeocoded addresses with quick "Resolve" action
+- ✅ **ENHANCED**: Status indicator showing geocoded vs. unresolved addresses count
+- ✅ **ENHANCED**: Button disabled with explanation when addresses need resolution
 
 ### Previous Critical Bug Fixes:
 - ✅ **MAJOR FIX**: Route optimization algorithms now work correctly (shortest distance ≠ fastest time)
