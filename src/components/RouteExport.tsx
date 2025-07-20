@@ -29,17 +29,20 @@ export default function RouteExport({ route }: RouteExportProps) {
   const generateSimpleMapForPDF = async (): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        // Créer un conteneur temporaire avec aspect ratio correct
+        // Taille optimisée pour le PDF (ratio 3:2 standard)
+        const mapWidth = 800;
+        const mapHeight = 533;
+        
+        // Créer un conteneur temporaire avec les bonnes dimensions
         const tempContainer = document.createElement('div');
-        tempContainer.style.width = '600px';
-        tempContainer.style.height = '400px'; // Ratio 3:2 pour éviter l'étirement
+        tempContainer.style.width = `${mapWidth}px`;
+        tempContainer.style.height = `${mapHeight}px`;
         tempContainer.style.position = 'absolute';
         tempContainer.style.top = '-9999px';
         tempContainer.style.left = '-9999px';
         tempContainer.style.overflow = 'hidden';
         tempContainer.style.border = 'none';
-        tempContainer.style.imageRendering = 'crisp-edges'; // Améliorer le rendu des images
-        tempContainer.style.textRendering = 'optimizeLegibility'; // Améliorer le rendu du texte
+        tempContainer.style.background = '#f8f9fa';
         document.body.appendChild(tempContainer);
 
         // Vérifier qu'on a des coordonnées valides
@@ -50,13 +53,13 @@ export default function RouteExport({ route }: RouteExportProps) {
           return;
         }
 
-        // Calculer le centre
+        // Calculer le centre et les bounds
         const lats = validLocations.map(loc => loc.coordinates!.latitude);
         const lngs = validLocations.map(loc => loc.coordinates!.longitude);
         const centerLat = lats.reduce((sum, lat) => sum + lat, 0) / lats.length;
         const centerLng = lngs.reduce((sum, lng) => sum + lng, 0) / lngs.length;
 
-        // Créer la carte avec options spécifiques pour l'export
+        // Créer la carte avec renderer Canvas pour de meilleures performances
         const map = L.map(tempContainer, {
           zoomControl: false,
           attributionControl: false,
@@ -65,165 +68,161 @@ export default function RouteExport({ route }: RouteExportProps) {
           doubleClickZoom: false,
           boxZoom: false,
           keyboard: false,
-          preferCanvas: true, // Utilise Canvas pour de meilleures performances
-          renderer: L.canvas() // Force l'utilisation du renderer Canvas
+          preferCanvas: true,
+          renderer: L.canvas({
+            tolerance: 0,
+            padding: 0.1
+          })
         }).setView([centerLat, centerLng], 10);
 
-        // Forcer la taille de la carte
-        map.getContainer().style.width = '600px';
-        map.getContainer().style.height = '400px';
-
-        // Ajouter les tuiles avec paramètres optimisés
+        // Ajouter les tuiles avec paramètres optimisés pour l'export
         const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 15, // Réduire le zoom max pour une meilleure qualité
+          maxZoom: 16,
           minZoom: 5,
-          detectRetina: false, // Désactiver la détection retina pour plus de stabilité
-          errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' // Tuile vide en cas d'erreur
+          detectRetina: false,
+          crossOrigin: 'anonymous'
         });
         tileLayer.addTo(map);
 
-        // Invalider la taille de la carte pour s'assurer du bon rendu
+        // Attendre que les tuiles se chargent puis continuer
+        let tilesLoaded = false;
+        const tileLoadTimeout = setTimeout(() => {
+          if (!tilesLoaded) {
+            console.warn('Timeout: tiles not loaded, proceeding anyway');
+            proceedWithMapCreation();
+          }
+        }, 3000);
+
+        tileLayer.on('load', () => {
+          tilesLoaded = true;
+          clearTimeout(tileLoadTimeout);
+          proceedWithMapCreation();
+        });
+
+        // Si pas de tiles à charger, procéder directement
         setTimeout(() => {
+          if (!tilesLoaded) {
+            tilesLoaded = true;
+            clearTimeout(tileLoadTimeout);
+            proceedWithMapCreation();
+          }
+        }, 500);
+
+        function proceedWithMapCreation() {
+          // Invalider la taille de la carte
           map.invalidateSize(true);
           
-          // Attendre un court délai puis ajouter les marqueurs
-          setTimeout(() => {
-            try {
-              // Calculer et ajuster la vue en premier
-              if (validLocations.length === 1) {
-                map.setView([validLocations[0].coordinates!.latitude, validLocations[0].coordinates!.longitude], 13);
-              } else {
-                const leafletBounds = L.latLngBounds(
-                  validLocations.map(loc => [loc.coordinates!.latitude, loc.coordinates!.longitude])
+          // Calculer et ajuster la vue selon le nombre de points
+          if (validLocations.length === 1) {
+            map.setView([validLocations[0].coordinates!.latitude, validLocations[0].coordinates!.longitude], 14);
+          } else {
+            const leafletBounds = L.latLngBounds(
+              validLocations.map(loc => [loc.coordinates!.latitude, loc.coordinates!.longitude])
+            );
+            map.fitBounds(leafletBounds.pad(0.12));
+          }
+
+          // Ajouter les marqueurs avec un style optimisé
+          validLocations.forEach((location, index) => {
+            const iconColor = location.isLocked ? '#dc2626' : '#2563eb';
+            const customIcon = L.divIcon({
+              html: `
+                <div style="
+                  width: 32px;
+                  height: 32px;
+                  background-color: ${iconColor};
+                  border: 3px solid white;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: bold;
+                  color: white;
+                  font-size: 14px;
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                  font-family: Arial, sans-serif;
+                  line-height: 1;
+                ">
+                  ${index + 1}
+                </div>
+              `,
+              className: 'custom-marker-export',
+              iconSize: [32, 32],
+              iconAnchor: [16, 16],
+            });
+
+            L.marker([location.coordinates!.latitude, location.coordinates!.longitude], {
+              icon: customIcon
+            }).addTo(map);
+          });
+
+          // Ajouter les routes si disponibles
+          if (route.segments && route.segments.length > 0) {
+            route.segments.forEach((segment, index) => {
+              if (segment.polyline && segment.polyline.coordinates) {
+                const coordinates = segment.polyline.coordinates.map((coord: number[]) => 
+                  [coord[1], coord[0]] as L.LatLngExpression
                 );
-                map.fitBounds(leafletBounds.pad(0.15)); // Plus de padding pour éviter que les marqueurs soient coupés
-              }
-
-              // Ajouter les marqueurs
-              validLocations.forEach((location, index) => {
-                const iconColor = location.isLocked ? '#dc2626' : '#2563eb'; // Bleu plus foncé pour meilleur contraste
-                const customIcon = L.divIcon({
-                  html: `
-                    <div style="
-                      width: 40px;
-                      height: 40px;
-                      background-color: ${iconColor};
-                      border: 4px solid white;
-                      border-radius: 50%;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      font-weight: 900;
-                      color: white;
-                      font-size: 16px;
-                      box-shadow: 0 4px 8px rgba(0,0,0,0.6);
-                      font-family: 'Arial Black', 'Arial', sans-serif;
-                      line-height: 1;
-                      text-align: center;
-                      position: relative;
-                    ">
-                      ${index + 1}
-                    </div>
-                  `,
-                  className: 'custom-marker-export',
-                  iconSize: [40, 40],
-                  iconAnchor: [20, 20],
-                });
-
-                L.marker([location.coordinates!.latitude, location.coordinates!.longitude], {
-                  icon: customIcon
-                }).addTo(map);
-              });
-
-              // Ajouter les routes si disponibles
-              if (route.segments && route.segments.length > 0) {
-                route.segments.forEach((segment, index) => {
-                  if (segment.polyline && segment.polyline.coordinates) {
-                    const coordinates = segment.polyline.coordinates.map((coord: number[]) => 
-                      [coord[1], coord[0]] as L.LatLngExpression
-                    );
-                    
-                    if (coordinates.length > 1) {
-                      const isReturnSegment = index === route.segments.length - 1 && route.isLoop;
-                      L.polyline(coordinates, {
-                        color: isReturnSegment ? '#ef4444' : '#3b82f6',
-                        weight: 3,
-                        opacity: 0.8,
-                        lineCap: 'round',
-                        lineJoin: 'round'
-                      }).addTo(map);
-                    }
-                  } else if (segment.from.coordinates && segment.to.coordinates) {
-                    // Ligne droite de fallback
-                    L.polyline([
-                      [segment.from.coordinates.latitude, segment.from.coordinates.longitude],
-                      [segment.to.coordinates.latitude, segment.to.coordinates.longitude]
-                    ], {
-                      color: '#94a3b8',
-                      weight: 2,
-                      opacity: 0.6,
-                      dashArray: '5, 10'
-                    }).addTo(map);
-                  }
-                });
-              }
-
-              // Invalider la taille une dernière fois avant la capture
-              map.invalidateSize(true);
-
-              // Capturer après un délai pour laisser le temps au rendu
-              setTimeout(async () => {
-                try {
-                  // Améliorer le rendu avant la capture
-                  const allMarkers = tempContainer.querySelectorAll('.custom-marker-export div');
-                  allMarkers.forEach(marker => {
-                    (marker as HTMLElement).style.imageRendering = 'crisp-edges';
-                    (marker as HTMLElement).style.transform = 'translateZ(0)'; // Forcer l'accélération GPU
-                  });
-
-                  // Utiliser html2canvas pour capturer avec options optimisées
-                  const { default: html2canvas } = await import('html2canvas');
-                  const canvas = await html2canvas(tempContainer, {
-                    backgroundColor: '#f8f9fa',
-                    scale: 1.5, // Échelle réduite pour éviter la distorsion
-                    useCORS: true,
-                    allowTaint: false,
-                    logging: false,
-                    width: 600,
-                    height: 400,
-                    windowWidth: 600,
-                    windowHeight: 400,
-                    onclone: (clonedDoc) => {
-                      // Améliorer la qualité des marqueurs dans le clone
-                      const markers = clonedDoc.querySelectorAll('.custom-marker-export div');
-                      markers.forEach(marker => {
-                        (marker as HTMLElement).style.transform = 'scale(1)';
-                        (marker as HTMLElement).style.imageRendering = 'crisp-edges';
-                      });
-                    }
-                  });
-                  
-                  const mapImage = canvas.toDataURL('image/png', 0.95); // Qualité plus élevée
-                  
-                  // Nettoyer
-                  document.body.removeChild(tempContainer);
-                  map.remove();
-                  
-                  resolve(mapImage);
-                } catch (error) {
-                  document.body.removeChild(tempContainer);
-                  map.remove();
-                  reject(error);
+                
+                if (coordinates.length > 1) {
+                  const isReturnSegment = index === route.segments.length - 1 && route.isLoop;
+                  L.polyline(coordinates, {
+                    color: isReturnSegment ? '#ef4444' : '#3b82f6',
+                    weight: 4,
+                    opacity: 0.9,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  }).addTo(map);
                 }
-              }, 1000); // Délai suffisant pour le rendu complet
+              } else if (segment.from.coordinates && segment.to.coordinates) {
+                L.polyline([
+                  [segment.from.coordinates.latitude, segment.from.coordinates.longitude],
+                  [segment.to.coordinates.latitude, segment.to.coordinates.longitude]
+                ], {
+                  color: '#94a3b8',
+                  weight: 3,
+                  opacity: 0.7,
+                  dashArray: '8, 8'
+                }).addTo(map);
+              }
+            });
+          }
+
+          // Capturer la carte après un délai pour s'assurer du rendu complet
+          setTimeout(async () => {
+            try {
+              const { default: html2canvas } = await import('html2canvas');
               
+              // Capturer avec des paramètres optimisés pour éviter la déformation
+              const canvas = await html2canvas(tempContainer, {
+                backgroundColor: '#f8f9fa',
+                scale: 1, // Échelle 1:1 pour éviter les distorsions
+                useCORS: true,
+                allowTaint: false,
+                logging: false,
+                width: mapWidth,
+                height: mapHeight,
+                ignoreElements: (element) => {
+                  // Ignorer les éléments de contrôle Leaflet
+                  return element.classList?.contains('leaflet-control-attribution') ||
+                         element.classList?.contains('leaflet-control-zoom');
+                }
+              });
+              
+              const mapImage = canvas.toDataURL('image/png', 0.9);
+              
+              // Nettoyer
+              document.body.removeChild(tempContainer);
+              map.remove();
+              
+              resolve(mapImage);
             } catch (error) {
               document.body.removeChild(tempContainer);
               map.remove();
               reject(error);
             }
-          }, 300); // Délai après invalidateSize
-        }, 100); // Délai initial pour s'assurer que le conteneur est prêt
+          }, 800);
+        }
 
       } catch (error) {
         reject(error);
@@ -382,9 +381,26 @@ export default function RouteExport({ route }: RouteExportProps) {
     // Insertion de la carte
     if (mapImageData) {
       try {
-        const mapWidth = pageWidth - 30;
-        const mapHeight = 80; // Hauteur réduite pour la première page
-        pdf.addImage(mapImageData, 'PNG', 15, yPosition, mapWidth, mapHeight, undefined, 'FAST');
+        // Calculer les dimensions pour maintenir l'aspect ratio 3:2
+        const availableWidth = pageWidth - 30;
+        const availableHeight = 120; // Plus d'espace pour la carte
+        
+        // Aspect ratio original de la carte (3:2)
+        const originalRatio = 800 / 533;
+        
+        let mapWidth = availableWidth;
+        let mapHeight = mapWidth / originalRatio;
+        
+        // Si la hauteur dépasse l'espace disponible, ajuster par la hauteur
+        if (mapHeight > availableHeight) {
+          mapHeight = availableHeight;
+          mapWidth = mapHeight * originalRatio;
+        }
+        
+        // Centrer horizontalement si nécessaire
+        const mapX = 15 + (availableWidth - mapWidth) / 2;
+        
+        pdf.addImage(mapImageData, 'PNG', mapX, yPosition, mapWidth, mapHeight, undefined, 'FAST');
         yPosition += mapHeight + 10;
       } catch (error) {
         console.warn('Erreur insertion carte:', error);
