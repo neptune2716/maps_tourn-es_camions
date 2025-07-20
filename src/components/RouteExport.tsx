@@ -230,7 +230,7 @@ Bon voyage !
   const costs = calculateCosts();
 
   return (
-    <div className="card space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center">
           <Download className="mr-2 h-5 w-5" />

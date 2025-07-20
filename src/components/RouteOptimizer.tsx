@@ -10,6 +10,7 @@ import LocationList from './LocationList.tsx';
 import LoadingSpinner from './LoadingSpinner.tsx';
 import RouteResults from './RouteResults.tsx';
 import RouteSettings from './RouteSettings.tsx';
+import RouteExport from './RouteExport.tsx';
 import { useNotifications, NotificationContainer } from './Notification.tsx';
 import { StepProgress } from './Progress.tsx';
 import { AddressSuggestion } from '../hooks/useAddressSearch.ts';
@@ -26,6 +27,7 @@ export default function RouteOptimizer() {
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [calculationStep, setCalculationStep] = useState(0);
   const [showResults, setShowResults] = useState(false);
+  const [showExportPopup, setShowExportPopup] = useState(false);
   
   // Notifications system
   const { notifications, addNotification, removeNotification } = useNotifications();
@@ -195,11 +197,6 @@ export default function RouteOptimizer() {
         autoClose: true,
         autoCloseDuration: 4000
       });
-      
-      // Naviguer vers la page de résultats après un court délai
-      setTimeout(() => {
-        setShowResults(true);
-      }, 1000);
       
       console.log('Trajet optimisé avec succès:', response);
     } catch (error) {
@@ -401,8 +398,8 @@ export default function RouteOptimizer() {
                     Résultats
                   </h2>
                   <button
-                    onClick={() => setShowResults(true)}
-                    className="btn-secondary flex items-center text-xs px-2 py-1 touch-manipulation"
+                    onClick={() => setShowExportPopup(true)}
+                    className="btn-primary flex items-center text-xs px-2 py-1 touch-manipulation"
                   >
                     <FileText className="mr-1 h-3 w-3" />
                     Détails/Export
@@ -515,6 +512,35 @@ export default function RouteOptimizer() {
           )}
         </div>
       </div>
+
+      {/* Export Popup Modal */}
+      {showExportPopup && route && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[9999] p-4"
+          onClick={() => setShowExportPopup(false)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Export & Partage du Trajet</h2>
+                <button
+                  onClick={() => setShowExportPopup(false)}
+                  className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <RouteExport route={route} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* File Upload Modal */}
       {showFileUpload && (
