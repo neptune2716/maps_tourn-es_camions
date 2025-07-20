@@ -257,37 +257,125 @@ export default function RouteExport({ route }: RouteExportProps) {
     yPosition = 50;
     pdf.setTextColor(0, 0, 0);
     
-    // Section Informations Générales
-    pdf.setFillColor(240, 248, 255);
-    pdf.rect(15, yPosition - 5, pageWidth - 30, 60, 'F');
-    pdf.setDrawColor(52, 152, 219);
-    pdf.setLineWidth(1);
-    pdf.rect(15, yPosition - 5, pageWidth - 30, 60);
-    
-    pdf.setFontSize(16);
+    // Section Informations avec boxes individuelles
+    pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(52, 152, 219);
-    pdf.text('INFORMATIONS GENERALES', 20, yPosition + 8);
+    pdf.text('INFORMATIONS DU TRAJET', 20, yPosition);
     
-    yPosition += 20;
-    pdf.setFontSize(11);
+    yPosition += 15;
+    
+    // Configuration des boxes
+    const boxWidth = (pageWidth - 50) / 3; // 3 colonnes
+    const boxHeight = 35;
+    const spacing = 10;
+    
+    // Box 1: Nombre d'arrêts
+    const box1X = 15;
+    const box1Y = yPosition;
+    pdf.setFillColor(240, 248, 255);
+    pdf.rect(box1X, box1Y, boxWidth, boxHeight, 'F');
+    pdf.setDrawColor(52, 152, 219);
+    pdf.setLineWidth(1);
+    pdf.rect(box1X, box1Y, boxWidth, boxHeight);
+    
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(52, 152, 219);
+    pdf.text(`${route.locations.length}`, box1X + boxWidth/2, box1Y + 18, { align: 'center' });
+    
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(0, 0, 0);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('ARRÊTS', box1X + boxWidth/2, box1Y + 28, { align: 'center' });
     
-    // Informations de base
-    const infoLines = [
-      `Nombre d'arrets: ${route.locations.length} locations`,
-      `Type de vehicule: ${route.vehicleType === 'car' ? 'Voiture' : 'Camion'}`,
-      `Distance totale: ${route.totalDistance.toFixed(2)} km`,
-      `Duree estimee: ${Math.floor(route.totalDuration / 60)}h${(Math.round(route.totalDuration) % 60).toString().padStart(2, '0')}`,
-      `Trajet en boucle: ${route.isLoop ? 'Oui' : 'Non'}`
-    ];
+    // Box 2: Distance totale
+    const box2X = box1X + boxWidth + spacing;
+    const box2Y = yPosition;
+    pdf.setFillColor(248, 255, 240);
+    pdf.rect(box2X, box2Y, boxWidth, boxHeight, 'F');
+    pdf.setDrawColor(76, 175, 80);
+    pdf.rect(box2X, box2Y, boxWidth, boxHeight);
     
-    infoLines.forEach((line, index) => {
-      pdf.text(line, 20, yPosition + (index * 8));
-    });
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(76, 175, 80);
+    pdf.text(`${route.totalDistance.toFixed(1)} km`, box2X + boxWidth/2, box2Y + 18, { align: 'center' });
     
-    yPosition += 50;
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('DISTANCE', box2X + boxWidth/2, box2Y + 28, { align: 'center' });
+    
+    // Box 3: Durée estimée
+    const box3X = box2X + boxWidth + spacing;
+    const box3Y = yPosition;
+    pdf.setFillColor(255, 245, 235);
+    pdf.rect(box3X, box3Y, boxWidth, boxHeight, 'F');
+    pdf.setDrawColor(255, 152, 0);
+    pdf.rect(box3X, box3Y, boxWidth, boxHeight);
+    
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(255, 152, 0);
+    pdf.text(`${Math.floor(route.totalDuration / 60)}h${(Math.round(route.totalDuration) % 60).toString().padStart(2, '0')}`, box3X + boxWidth/2, box3Y + 18, { align: 'center' });
+    
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('DURÉE', box3X + boxWidth/2, box3Y + 28, { align: 'center' });
+    
+    yPosition += boxHeight + 15;
+    
+    // Deuxième ligne de boxes
+    const box2Width = (pageWidth - 40) / 2; // 2 colonnes pour la deuxième ligne
+    
+    // Box 4: Type de véhicule
+    const box4X = 15;
+    const box4Y = yPosition;
+    pdf.setFillColor(250, 240, 255);
+    pdf.rect(box4X, box4Y, box2Width, boxHeight, 'F');
+    pdf.setDrawColor(156, 39, 176);
+    pdf.rect(box4X, box4Y, box2Width, boxHeight);
+    
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(156, 39, 176);
+    pdf.text(`${route.vehicleType === 'car' ? 'VOITURE' : 'CAMION'}`, box4X + box2Width/2, box4Y + 18, { align: 'center' });
+    
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('VÉHICULE', box4X + box2Width/2, box4Y + 28, { align: 'center' });
+    
+    // Box 5: Trajet en boucle
+    const box5X = box4X + box2Width + spacing;
+    const box5Y = yPosition;
+    if (route.isLoop) {
+      pdf.setFillColor(248, 255, 240);
+      pdf.setDrawColor(76, 175, 80);
+    } else {
+      pdf.setFillColor(255, 248, 248);
+      pdf.setDrawColor(220, 53, 69);
+    }
+    pdf.rect(box5X, box5Y, box2Width, boxHeight, 'F');
+    pdf.rect(box5X, box5Y, box2Width, boxHeight);
+    
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    if (route.isLoop) {
+      pdf.setTextColor(76, 175, 80);
+    } else {
+      pdf.setTextColor(220, 53, 69);
+    }
+    pdf.text(`${route.isLoop ? 'OUI' : 'NON'}`, box5X + box2Width/2, box5Y + 18, { align: 'center' });
+    
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('BOUCLE', box5X + box2Width/2, box5Y + 28, { align: 'center' });
+    
+    yPosition += boxHeight + 20;
     
     // === CARTE SUR LA PREMIÈRE PAGE ===
     
