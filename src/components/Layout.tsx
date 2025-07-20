@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MapPin, Truck, Menu, X } from 'lucide-react';
+import { MapPin, Menu, X } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;

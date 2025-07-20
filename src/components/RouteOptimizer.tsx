@@ -7,6 +7,9 @@ import OpenStreetMapComponent from './OpenStreetMapComponent.tsx';
 import AddressAutocomplete from './AddressAutocomplete.tsx';
 import FileUpload from './FileUpload.tsx';
 import LocationList from './LocationList.tsx';
+import LoadingSpinner from './LoadingSpinner.tsx';
+import { useNotifications, NotificationContainer } from './Notification.tsx';
+import { StepProgress } from './Progress.tsx';
 import { AddressSuggestion } from '../hooks/useAddressSearch.ts';
 
 export default function RouteOptimizer() {
@@ -19,6 +22,17 @@ export default function RouteOptimizer() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
+  const [calculationStep, setCalculationStep] = useState(0);
+  
+  // Notifications system
+  const { notifications, addNotification, removeNotification } = useNotifications();
+  
+  const calculationSteps = [
+    'Validation des adresses',
+    'Calcul des distances',
+    'Optimisation du trajet',
+    'Génération de la carte'
+  ];
 
   const addLocation = () => {
     if (newAddress.trim()) {
@@ -30,6 +44,14 @@ export default function RouteOptimizer() {
 
       setLocations([...locations, newLocation]);
       setNewAddress('');
+      
+      addNotification({
+        type: 'info',
+        title: 'Emplacement ajouté',
+        message: `"${newLocation.address}" a été ajouté à la liste.`,
+        autoClose: true,
+        autoCloseDuration: 3000
+      });
     }
   };
 
@@ -84,8 +106,20 @@ export default function RouteOptimizer() {
   const handleFileUpload = (uploadedLocations: Location[], replaceExisting: boolean) => {
     if (replaceExisting) {
       setLocations(uploadedLocations);
+      addNotification({
+        type: 'success',
+        title: 'Fichier importé',
+        message: `${uploadedLocations.length} emplacement(s) importé(s) avec succès.`,
+        autoClose: true
+      });
     } else {
       setLocations(prev => [...prev, ...uploadedLocations]);
+      addNotification({
+        type: 'success', 
+        title: 'Emplacements ajoutés',
+        message: `${uploadedLocations.length} emplacement(s) ajouté(s) à la liste existante.`,
+        autoClose: true
+      });
     }
     setRoute(undefined);
     setShowFileUpload(false);
@@ -94,41 +128,87 @@ export default function RouteOptimizer() {
   const optimizeRoute = async () => {
     if (locations.length < 2) {
       setCalculationError('Au moins 2 emplacements sont requis');
+      addNotification({
+        type: 'warning',
+        title: 'Emplacements insuffisants',
+        message: 'Ajoutez au moins 2 emplacements pour calculer un trajet.',
+        autoClose: true
+      });
       return;
     }
 
     // Vérifier que tous les emplacements ont des coordonnées
     const ungeocoded = locations.filter(loc => !loc.coordinates);
     if (ungeocoded.length > 0) {
-      setCalculationError(
-        `${ungeocoded.length} adresse(s) ne sont pas géocodées. Veuillez résoudre ces adresses avant de calculer l'itinéraire :\n` +
-        ungeocoded.map(loc => `• ${loc.address}`).join('\n')
-      );
+      const errorMessage = `${ungeocoded.length} adresse(s) ne sont pas géocodées. Veuillez résoudre ces adresses avant de calculer l'itinéraire :\n` +
+        ungeocoded.map(loc => `• ${loc.address}`).join('\n');
+      
+      setCalculationError(errorMessage);
+      addNotification({
+        type: 'error',
+        title: 'Adresses non géocodées',
+        message: `${ungeocoded.length} adresse(s) doivent être résolues avant le calcul.`,
+        autoClose: true
+      });
       return;
     }
 
     setIsCalculating(true);
     setCalculationError(null);
+    setCalculationStep(0);
 
     try {
+      // Étape 1: Validation
+      setCalculationStep(0);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Étape 2: Calcul des distances
+      setCalculationStep(1);
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Étape 3: Optimisation
+      setCalculationStep(2);
       const response = await freeRoutingService.calculateRoute({
         locations,
         vehicleType,
         optimizationMethod,
         isLoop,
       });
+      
+      // Étape 4: Génération de la carte
+      setCalculationStep(3);
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       setRoute(response.route);
       
       // Mettre à jour les emplacements avec l'ordre optimisé
       setLocations(response.route.locations);
       
+      // Notification de succès
+      addNotification({
+        type: 'success',
+        title: 'Trajet optimisé',
+        message: `Trajet calculé avec succès ! Distance: ${response.route.totalDistance.toFixed(1)} km, Durée: ${Math.round(response.route.totalDuration)} min`,
+        autoClose: true,
+        autoCloseDuration: 4000
+      });
+      
       console.log('Trajet optimisé avec succès:', response);
     } catch (error) {
       console.error('Échec de l\'optimisation de trajet:', error);
-      setCalculationError(error instanceof Error ? error.message : 'Impossible d\'optimiser le trajet');
+      const errorMessage = error instanceof Error ? error.message : 'Impossible d\'optimiser le trajet';
+      
+      setCalculationError(errorMessage);
+      addNotification({
+        type: 'error',
+        title: 'Erreur de calcul',
+        message: 'Impossible de calculer le trajet. Vérifiez votre connexion et réessayez.',
+        autoClose: true,
+        autoCloseDuration: 6000
+      });
     } finally {
       setIsCalculating(false);
+      setCalculationStep(0);
     }
   };
 
@@ -194,7 +274,7 @@ export default function RouteOptimizer() {
                   >
                     {isCalculating ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <LoadingSpinner size="sm" className="mr-2" />
                         Calcul en cours...
                       </>
                     ) : (
@@ -204,6 +284,17 @@ export default function RouteOptimizer() {
                       </>
                     )}
                   </button>
+
+                  {/* Progress indicator during calculation */}
+                  {isCalculating && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                      <StepProgress 
+                        steps={calculationSteps}
+                        currentStep={calculationStep}
+                        showLoadingDots={true}
+                      />
+                    </div>
+                  )}
 
                   {locations.some(loc => !loc.coordinates) && (
                     <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded mt-2">
@@ -529,6 +620,13 @@ export default function RouteOptimizer() {
           existingLocationsCount={locations.length}
         />
       )}
+
+      {/* Notifications */}
+      <NotificationContainer 
+        notifications={notifications}
+        onRemove={removeNotification}
+        position="top-right"
+      />
     </div>
   );
 }
