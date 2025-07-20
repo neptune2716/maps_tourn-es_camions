@@ -8,7 +8,6 @@ import LazyMap from './LazyMap.tsx';
 import AddressAutocomplete from './AddressAutocomplete.tsx';
 import LazyFileUpload from './LazyFileUpload.tsx';
 import LocationList from './LocationList.tsx';
-import RouteResults from './RouteResults.tsx';
 import RouteSettings from './RouteSettings.tsx';
 import RouteExport from './RouteExport.tsx';
 import { useNotifications, NotificationContainer } from './Notification.tsx';
@@ -26,7 +25,6 @@ export default function RouteOptimizer() {
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [calculationStep, setCalculationStep] = useState(0);
-  const [showResults, setShowResults] = useState(false);
   const [showExportPopup, setShowExportPopup] = useState(false);
   
   // Contrôleur d'abandon pour annuler les calculs
@@ -298,20 +296,6 @@ export default function RouteOptimizer() {
     }
   };
 
-  // Si on affiche les résultats, rendre la page de résultats
-  if (showResults && route) {
-    return (
-      <RouteResults
-        route={route}
-        onBack={() => setShowResults(false)}
-        onModifyRoute={() => {
-          setShowResults(false);
-          setRoute(undefined);
-        }}
-      />
-    );
-  }
-
   return (
     <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] bg-gray-50 lg:overflow-hidden">
       <div className="h-full p-3 sm:p-4 lg:p-4">
@@ -552,17 +536,11 @@ export default function RouteOptimizer() {
           {route && (
             <div className="order-5 lg:col-span-3 lg:row-span-1">
               <div className="card h-full flex flex-col">
-                <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                <div className="flex items-center mb-3 flex-shrink-0">
                   <h2 className="text-base font-semibold text-gray-900 flex items-center">
                     <MapPin className="mr-2 h-4 w-4" />
                     Étapes Détaillées
                   </h2>
-                  <button
-                    onClick={() => setShowResults(true)}
-                    className="btn-primary text-xs px-3 py-2 touch-manipulation"
-                  >
-                    Voir Détails
-                  </button>
                 </div>
                 
                 <div className="flex-1 min-h-0 overflow-y-auto max-h-48 lg:max-h-none">

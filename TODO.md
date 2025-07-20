@@ -9,6 +9,11 @@ A web application for finding shortest routes between multiple locations, suppor
 📅 **Last Updated**: July 20, 2025  
 🎯 **Next Milestone**: Phase 10 - Testing & Quality Assurance
 
+**Recent UI Cleanup**:
+- ✅ **REMOVED**: "Voir Détails" button and RouteResults modal window (user-requested removal as redundant functionality)
+- ✅ **REMOVED**: RouteResults.tsx component file (entire component was unused after button removal)
+- ✅ **REMOVED**: DrivingDirections.tsx component file (only used by RouteResults, now redundant)
+
 ✅ **Phase 9 Complete**: All Performance & Optimization features implemented including lazy loading, caching, cancellation, and parameter freezing
 
 ### Latest Phase 9 Completion (Performance & Optimization):
