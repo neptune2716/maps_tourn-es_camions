@@ -459,7 +459,7 @@ export default function RouteOptimizer() {
                 </div>
               )}
               
-              <div className="flex-1 min-h-0 h-64 sm:h-80 lg:h-auto">
+              <div className="flex-1 min-h-0 h-64 sm:h-80 lg:flex-1 lg:h-auto">
                 <LazyMap
                   locations={locations}
                   route={route}
@@ -483,7 +483,7 @@ export default function RouteOptimizer() {
                   >
                     <FileText className="mr-1 h-3 w-3" />
                     <span className="hidden sm:inline">Export</span>
-                    <span className="sm:hidden">📤</span>
+                    <span className="sm:hidden">Export</span>
                   </button>
                 </div>
                 

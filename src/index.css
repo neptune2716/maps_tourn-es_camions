@@ -119,6 +119,15 @@
   /* S'assurer que les cartes Leaflet restent en dessous */
   .leaflet-container {
     z-index: 1 !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
+  
+  /* Mobile map container fixes */
+  @media (max-width: 1023px) {
+    .leaflet-container {
+      min-height: 256px !important;
+    }
   }
   
   /* Prevent text selection for drag elements */

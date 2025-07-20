@@ -20,7 +20,7 @@ interface OpenStreetMapProps {
 export default function OpenStreetMapComponent({ 
   locations, 
   route, 
-  className = "w-full h-96 rounded-lg" 
+  className = "w-full h-full rounded-lg" 
 }: OpenStreetMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
@@ -49,7 +49,18 @@ export default function OpenStreetMapComponent({
       }
     }, 100);
 
+    // Additional invalidateSize for mobile devices
+    const handleResize = () => {
+      if (mapInstance.current) {
+        mapInstance.current.invalidateSize();
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
