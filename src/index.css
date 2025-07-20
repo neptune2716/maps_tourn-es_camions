@@ -9,10 +9,29 @@
   html {
     font-family: 'Inter', sans-serif;
     scroll-behavior: smooth;
+    /* Prevent zoom on double-tap for better text selection */
+    touch-action: manipulation;
   }
   
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
+  }
+  
+  /* Improve text selection on mobile */
+  input[type="text"], textarea {
+    /* Prevent zoom when focusing inputs on iOS */
+    font-size: 16px;
+    /* Allow text selection */
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+  
+  @media (min-width: 640px) {
+    input[type="text"], textarea {
+      font-size: 14px;
+    }
   }
 }
 
@@ -26,7 +45,7 @@
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-shadow hover:shadow-md;
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 transition-shadow hover:shadow-md;
   }
   
   .input-field {
@@ -34,15 +53,40 @@
   }
 
   .sticky-card {
-    @apply sticky top-8;
+    @apply sticky top-4 sm:top-8;
   }
 
   .location-item {
-    @apply flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-150;
+    @apply flex items-center justify-between p-2 sm:p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-150;
   }
 
   .optimization-grid {
     @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  /* Touch-friendly interactive elements */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Mobile-friendly text selection */
+  .text-selectable {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    /* Prevent zoom on double-tap while allowing text selection */
+    touch-action: manipulation;
+  }
+  
+  /* Prevent text selection for drag elements */
+  .drag-handle {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    touch-action: none;
   }
 }
 
@@ -73,13 +117,35 @@
   .map-notification {
     z-index: 1000 !important;
     position: absolute;
-    top: 4rem;
-    right: 1rem;
-    max-width: 20rem;
+    top: 3rem;
+    right: 0.5rem;
+    max-width: 18rem;
+  }
+  
+  @media (min-width: 640px) {
+    .map-notification {
+      top: 4rem;
+      right: 1rem;
+      max-width: 20rem;
+    }
   }
   
   /* Ensure Leaflet controls stay on top */
   .leaflet-control-container {
     z-index: 1001 !important;
+  }
+  
+  /* Mobile-friendly zoom controls */
+  @media (max-width: 640px) {
+    .leaflet-control-zoom {
+      margin: 10px 10px 0 0 !important;
+    }
+    
+    .leaflet-control-zoom a {
+      width: 36px !important;
+      height: 36px !important;
+      line-height: 36px !important;
+      font-size: 20px !important;
+    }
   }
 }

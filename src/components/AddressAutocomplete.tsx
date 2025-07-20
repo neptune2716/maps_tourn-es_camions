@@ -12,6 +12,7 @@ interface AddressAutocompleteProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  autoSelectText?: boolean; // New prop for auto-selecting text
 }
 
 export default function AddressAutocomplete({
@@ -23,7 +24,8 @@ export default function AddressAutocomplete({
   onBlur,
   placeholder = "Rechercher une adresse...",
   className = "",
-  disabled = false
+  disabled = false,
+  autoSelectText = false
 }: AddressAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -76,6 +78,19 @@ export default function AddressAutocomplete({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onBlur]);
+
+  // Auto-focus and select text when component mounts (for editing mode)
+  useEffect(() => {
+    if (inputRef.current && autoSelectText && value) {
+      inputRef.current.focus();
+      // Small delay to ensure the input is ready, then select all text
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.select();
+        }
+      }, 50);
+    }
+  }, [autoSelectText, value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -242,9 +257,14 @@ export default function AddressAutocomplete({
             w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm 
             focus:outline-none focus:ring-blue-500 focus:border-blue-500
             disabled:bg-gray-100 disabled:cursor-not-allowed
+            text-selectable
             ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
           `}
           autoComplete="off"
+          style={{
+            // Prevent zoom on iOS when focusing input
+            fontSize: '16px'
+          }}
         />
         
         {value && (
