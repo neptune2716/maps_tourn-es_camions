@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export interface AddressSuggestion {
   display_name: string;
@@ -20,10 +20,25 @@ export interface AddressSuggestion {
   };
 }
 
+// Cache pour les résultats de recherche
+const searchCache = new Map<string, { results: AddressSuggestion[], timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function useAddressSearch() {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Fonction pour vérifier et nettoyer le cache
+  const cleanCache = useCallback(() => {
+    const now = Date.now();
+    for (const [key, value] of searchCache.entries()) {
+      if (now - value.timestamp > CACHE_DURATION) {
+        searchCache.delete(key);
+      }
+    }
+  }, []);
 
   // Fonction pour normaliser les accents et caractères spéciaux français
   const normalizeText = useCallback((text: string): string => {
@@ -40,6 +55,28 @@ export function useAddressSearch() {
   const searchAddresses = useCallback(async (query: string, countryCode = 'FR') => {
     if (query.length < 3) {
       setSuggestions([]);
+      return;
+    }
+
+    // Annuler la requête précédente si elle existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Créer un nouveau contrôleur pour cette requête
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    // Nettoyer le cache périodiquement
+    cleanCache();
+
+    // Vérifier le cache
+    const cacheKey = `${query.toLowerCase().trim()}_${countryCode}`;
+    const cachedResult = searchCache.get(cacheKey);
+    
+    if (cachedResult && Date.now() - cachedResult.timestamp < CACHE_DURATION) {
+      console.log(`🎯 Utilisation du cache pour "${query}"`);
+      setSuggestions(cachedResult.results);
       return;
     }
 
@@ -96,6 +133,7 @@ export function useAddressSearch() {
         headers: {
           'User-Agent': 'RouteOptimizer/1.0.0 (https://github.com/yourproject/route-optimizer)',
         },
+        signal, // Ajouter le signal d'abandon
       });
 
       if (!response.ok) {
@@ -141,6 +179,7 @@ export function useAddressSearch() {
               headers: {
                 'User-Agent': 'RouteOptimizer/1.0.0 (https://github.com/yourproject/route-optimizer)',
               },
+              signal, // Ajouter le signal d'abandon
             });
             
             if (variantResponse.ok) {
@@ -281,19 +320,41 @@ export function useAddressSearch() {
         })
         .slice(0, 8); // Limiter à 8 résultats
 
+      // Mettre en cache le résultat
+      searchCache.set(cacheKey, {
+        results: filteredData,
+        timestamp: Date.now()
+      });
+
+      console.log(`🔍 Recherche "${query}" - ${filteredData.length} résultats (${cachedResult ? 'cache' : 'API'})`);
+
       setSuggestions(filteredData);
     } catch (err) {
+      // Ignorer les erreurs d'abandon (AbortError)
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log(`🚫 Recherche annulée pour "${query}"`);
+        return;
+      }
+      
       console.error('Erreur de recherche d\'adresses:', err);
       setError(err instanceof Error ? err.message : 'Erreur de recherche');
       setSuggestions([]);
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   }, []);
 
   const clearSuggestions = useCallback(() => {
+    // Annuler toute requête en cours
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
     setSuggestions([]);
     setError(null);
+    setIsLoading(false);
   }, []);
 
   return {

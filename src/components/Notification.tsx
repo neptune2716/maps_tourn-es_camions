@@ -183,7 +183,7 @@ export function NotificationContainer({
   }
 
   return (
-    <div className={`fixed ${positionClasses[position]} z-50 space-y-2 max-w-sm w-full`}>
+    <div className={`fixed ${positionClasses[position]} z-[60] space-y-2 max-w-sm w-full`}>
       {notifications.map((notification) => (
         <Notification
           key={notification.id}

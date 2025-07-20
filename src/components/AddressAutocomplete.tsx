@@ -44,7 +44,7 @@ export default function AddressAutocomplete({
     }
   };
 
-  // Recherche avec debounce
+  // Recherche avec debounce optimisé
   useEffect(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -54,7 +54,7 @@ export default function AddressAutocomplete({
       timeoutRef.current = setTimeout(() => {
         searchAddresses(value);
         setIsOpen(true);
-      }, 300); // Délai de 300ms pour éviter trop de requêtes
+      }, 500); // Délai de 500ms pour réduire les appels API
     } else {
       clearSuggestions();
       setIsOpen(false);

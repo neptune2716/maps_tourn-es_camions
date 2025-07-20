@@ -8,6 +8,7 @@ interface RouteSettingsProps {
   onVehicleTypeChange: (type: VehicleType) => void;
   onOptimizationMethodChange: (method: OptimizationMethod) => void;
   onLoopChange: (isLoop: boolean) => void;
+  disabled?: boolean; // Nouveau prop pour désactiver pendant les calculs
 }
 
 interface VehicleOption {
@@ -32,7 +33,8 @@ export default function RouteSettings({
   isLoop,
   onVehicleTypeChange,
   onOptimizationMethodChange,
-  onLoopChange
+  onLoopChange,
+  disabled = false
 }: RouteSettingsProps) {
   const vehicleOptions: VehicleOption[] = [
     {
@@ -89,8 +91,12 @@ export default function RouteSettings({
             return (
               <button
                 key={option.type}
-                onClick={() => onVehicleTypeChange(option.type)}
-                className={'p-3 rounded-lg border-2 text-left transition-all duration-200 ' + (isSelected ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50')}
+                onClick={() => !disabled && onVehicleTypeChange(option.type)}
+                disabled={disabled}
+                className={'p-3 rounded-lg border-2 text-left transition-all duration-200 ' + 
+                  (disabled ? 'opacity-50 cursor-not-allowed' : '') +
+                  (isSelected ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50')
+                }
               >
                 <div className="flex items-center mb-2">
                   <Icon className={'h-4 w-4 mr-2 ' + (isSelected ? 'text-blue-600' : 'text-gray-600')} />
@@ -118,8 +124,12 @@ export default function RouteSettings({
             return (
               <button
                 key={option.method}
-                onClick={() => onOptimizationMethodChange(option.method)}
-                className={'w-full p-3 rounded-lg border text-left transition-all duration-200 ' + (isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50')}
+                onClick={() => !disabled && onOptimizationMethodChange(option.method)}
+                disabled={disabled}
+                className={'w-full p-3 rounded-lg border text-left transition-all duration-200 ' + 
+                  (disabled ? 'opacity-50 cursor-not-allowed' : '') +
+                  (isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50')
+                }
               >
                 <div className="flex items-center">
                   <Icon className={'h-4 w-4 mr-3 ' + (isSelected ? 'text-blue-600' : option.color)} />
@@ -153,11 +163,12 @@ export default function RouteSettings({
             <div className="text-xs text-gray-600">Retourner au point de départ</div>
           </div>
         </div>
-        <label className="relative inline-flex items-center cursor-pointer">
+        <label className={`relative inline-flex items-center ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
           <input
             type="checkbox"
             checked={isLoop}
-            onChange={(e) => onLoopChange(e.target.checked)}
+            onChange={(e) => !disabled && onLoopChange(e.target.checked)}
+            disabled={disabled}
             className="sr-only peer"
           />
           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>

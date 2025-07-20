@@ -1,4 +1,5 @@
 import { Location, Route, RouteSegment, VehicleType, OptimizationMethod, RouteOptimizationRequest, RouteOptimizationResponse } from '../types/index.ts';
+import { getCachedRoute, setCachedRoute } from '../utils/cacheManager.ts';
 
 export interface FreeRoutingProvider {
   calculateRoute(request: RouteOptimizationRequest): Promise<RouteOptimizationResponse>;
@@ -22,6 +23,20 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
 
   async calculateRoute(request: RouteOptimizationRequest): Promise<RouteOptimizationResponse> {
     const startTime = Date.now();
+    
+    // Vérifier le cache en premier
+    const cachedRoute = getCachedRoute(request);
+    if (cachedRoute) {
+      console.log('⚡ Route trouvée dans le cache, retour immédiat');
+      return {
+        route: cachedRoute,
+        metadata: {
+          calculationTime: Date.now() - startTime,
+          algorithm: 'cache-hit',
+          apiProvider: 'Cache'
+        }
+      };
+    }
     
     // Clear cache for each new route calculation
     this.clearSegmentCache();
@@ -87,6 +102,9 @@ export class OpenStreetMapRoutingService implements FreeRoutingProvider {
 
       // Cache performance summary
       console.log(`💾 Performance du cache: ${this.segmentCache.size} segments en cache`);
+
+      // Sauvegarder la route calculée dans le cache
+      setCachedRoute(request, route);
 
       return {
         route,

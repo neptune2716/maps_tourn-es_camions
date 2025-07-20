@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Upload, MapPin, AlertCircle, Settings2, Fuel, Navigation, FileText, Map, Car, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Upload, MapPin, AlertCircle, Settings2, Fuel, Navigation, FileText, Map, Car, Clock, X } from 'lucide-react';
 import { Location, VehicleType, OptimizationMethod, Route } from '../types/index.ts';
 import { freeRoutingService } from '../services/freeRoutingService.ts';
 import { trimAddress } from '../utils/routeUtils.ts';
-import OpenStreetMapComponent from './OpenStreetMapComponent.tsx';
+import { getUserPreferences, saveUserPreferences } from '../utils/cacheManager.ts';
+import LazyMap from './LazyMap.tsx';
 import AddressAutocomplete from './AddressAutocomplete.tsx';
-import FileUpload from './FileUpload.tsx';
+import LazyFileUpload from './LazyFileUpload.tsx';
 import LocationList from './LocationList.tsx';
-import LoadingSpinner from './LoadingSpinner.tsx';
 import RouteResults from './RouteResults.tsx';
 import RouteSettings from './RouteSettings.tsx';
 import RouteExport from './RouteExport.tsx';
@@ -29,8 +29,33 @@ export default function RouteOptimizer() {
   const [showResults, setShowResults] = useState(false);
   const [showExportPopup, setShowExportPopup] = useState(false);
   
+  // Contrôleur d'abandon pour annuler les calculs
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  
   // Notifications system
   const { notifications, addNotification, removeNotification } = useNotifications();
+  
+  // Charger les préférences utilisateur au démarrage
+  useEffect(() => {
+    const savedPreferences = getUserPreferences();
+    if (savedPreferences) {
+      setVehicleType(savedPreferences.vehicleType);
+      setOptimizationMethod(savedPreferences.optimizationMethod);
+      setIsLoop(savedPreferences.isLoop);
+      console.log('📖 Préférences utilisateur restaurées');
+    }
+  }, []);
+
+  // Sauvegarder les préférences quand elles changent
+  useEffect(() => {
+    const preferences = {
+      vehicleType,
+      optimizationMethod,
+      isLoop,
+      autoSaveLocations: true
+    };
+    saveUserPreferences(preferences);
+  }, [vehicleType, optimizationMethod, isLoop]);
   
   const calculationSteps = [
     'Validation des adresses',
@@ -158,31 +183,64 @@ export default function RouteOptimizer() {
       return;
     }
 
+    // Figer les paramètres au moment du lancement du calcul
+    const currentParams = {
+      vehicleType,
+      optimizationMethod,
+      isLoop,
+      locations: [...locations] // Copie pour éviter les mutations
+    };
+
+    // Créer un contrôleur d'abandon
+    const controller = new AbortController();
+    setAbortController(controller);
+
     setIsCalculating(true);
     setCalculationError(null);
     setCalculationStep(0);
 
     try {
+      // Fonction helper pour les timeouts annulables
+      const abortableTimeout = (ms: number) => {
+        return new Promise<void>((resolve, reject) => {
+          const timeoutId = setTimeout(() => resolve(), ms);
+          
+          // Écouter l'événement d'annulation
+          controller.signal.addEventListener('abort', () => {
+            clearTimeout(timeoutId);
+            reject(new Error('Calcul annulé par l\'utilisateur'));
+          });
+        });
+      };
+
       // Étape 1: Validation
       setCalculationStep(0);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await abortableTimeout(500);
       
       // Étape 2: Calcul des distances
       setCalculationStep(1);
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await abortableTimeout(800);
       
       // Étape 3: Optimisation
       setCalculationStep(2);
+      await abortableTimeout(200);
+
+      // Utiliser les paramètres figés pour le calcul
       const response = await freeRoutingService.calculateRoute({
-        locations,
-        vehicleType,
-        optimizationMethod,
-        isLoop,
+        locations: currentParams.locations,
+        vehicleType: currentParams.vehicleType,
+        optimizationMethod: currentParams.optimizationMethod,
+        isLoop: currentParams.isLoop,
       });
+      
+      // Vérifier une dernière fois avant de finaliser
+      if (controller.signal.aborted) {
+        throw new Error('Calcul annulé par l\'utilisateur');
+      }
       
       // Étape 4: Génération de la carte
       setCalculationStep(3);
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await abortableTimeout(300);
 
       setRoute(response.route);
       
@@ -200,20 +258,48 @@ export default function RouteOptimizer() {
       
       console.log('Trajet optimisé avec succès:', response);
     } catch (error) {
-      console.error('Échec de l\'optimisation de trajet:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Impossible d\'optimiser le trajet';
-      
-      setCalculationError(errorMessage);
-      addNotification({
-        type: 'error',
-        title: 'Erreur de calcul',
-        message: 'Impossible de calculer le trajet. Vérifiez votre connexion et réessayez.',
-        autoClose: true,
-        autoCloseDuration: 6000
-      });
+      if (error instanceof Error && error.message.includes('annulé')) {
+        addNotification({
+          type: 'info',
+          title: 'Calcul annulé',
+          message: 'Le calcul du trajet a été annulé.',
+          autoClose: true
+        });
+      } else {
+        console.error('Échec de l\'optimisation de trajet:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Impossible d\'optimiser le trajet';
+        
+        setCalculationError(errorMessage);
+        addNotification({
+          type: 'error',
+          title: 'Erreur de calcul',
+          message: 'Impossible de calculer le trajet. Vérifiez votre connexion et réessayez.',
+          autoClose: true,
+          autoCloseDuration: 6000
+        });
+      }
     } finally {
       setIsCalculating(false);
       setCalculationStep(0);
+      setAbortController(null);
+    }
+  };
+
+  const cancelCalculation = () => {
+    if (abortController) {
+      abortController.abort();
+      
+      // Arrêter immédiatement tous les états
+      setIsCalculating(false);
+      setCalculationStep(0);
+      setAbortController(null);
+      
+      addNotification({
+        type: 'info',
+        title: 'Calcul annulé',
+        message: 'Le calcul du trajet a été annulé.',
+        autoClose: true
+      });
     }
   };
 
@@ -283,18 +369,17 @@ export default function RouteOptimizer() {
                 {/* Optimize Button */}
                 <div className="pt-2 sm:pt-3 border-t border-gray-200">
                   <button
-                    onClick={optimizeRoute}
+                    onClick={isCalculating ? cancelCalculation : optimizeRoute}
                     disabled={
-                      locations.length < 2 || 
-                      isCalculating || 
-                      locations.some(loc => !loc.coordinates)
+                      (!isCalculating && locations.length < 2) || 
+                      (!isCalculating && locations.some(loc => !loc.coordinates))
                     }
                     className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation"
                   >
                     {isCalculating ? (
                       <>
-                        <LoadingSpinner size="sm" className="mr-2" />
-                        {calculationSteps[calculationStep]}
+                        <X className="mr-2 h-4 w-4" />
+                        Annuler le calcul
                       </>
                     ) : (
                       <>
@@ -357,6 +442,7 @@ export default function RouteOptimizer() {
                   onOptimizationMethodChange={setOptimizationMethod}
                   isLoop={isLoop}
                   onLoopChange={setIsLoop}
+                  disabled={isCalculating}
                 />
               </div>
             </div>
@@ -379,10 +465,9 @@ export default function RouteOptimizer() {
               )}
               
               <div className="flex-1 min-h-0">
-                <OpenStreetMapComponent 
+                <LazyMap
                   locations={locations}
                   route={route}
-                  className="h-full w-full rounded-lg"
                 />
               </div>
             </div>
@@ -542,14 +627,13 @@ export default function RouteOptimizer() {
         </div>
       )}
 
-      {/* File Upload Modal */}
-      {showFileUpload && (
-        <FileUpload
-          onLocationsLoaded={handleFileUpload}
-          onClose={() => setShowFileUpload(false)}
-          existingLocationsCount={locations.length}
-        />
-      )}
+      {/* File Upload Modal - Lazy Loaded */}
+      <LazyFileUpload
+        isOpen={showFileUpload}
+        onLocationsLoaded={handleFileUpload}
+        onClose={() => setShowFileUpload(false)}
+        existingLocationsCount={locations.length}
+      />
 
       {/* Notifications */}
       <NotificationContainer 
