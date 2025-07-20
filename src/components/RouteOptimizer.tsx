@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Upload, MapPin, AlertCircle, Settings2, Fuel, Navigation, FileText, Map } from 'lucide-react';
+import { Upload, MapPin, AlertCircle, Settings2, Fuel, Navigation, FileText, Map, Car, Clock } from 'lucide-react';
 import { Location, VehicleType, OptimizationMethod, Route } from '../types/index.ts';
 import { freeRoutingService } from '../services/freeRoutingService.ts';
+import { trimAddress } from '../utils/routeUtils.ts';
 import OpenStreetMapComponent from './OpenStreetMapComponent.tsx';
 import AddressAutocomplete from './AddressAutocomplete.tsx';
 import FileUpload from './FileUpload.tsx';
 import LocationList from './LocationList.tsx';
 import LoadingSpinner from './LoadingSpinner.tsx';
 import RouteResults from './RouteResults.tsx';
-import RouteDetails from './RouteDetails.tsx';
 import RouteSettings from './RouteSettings.tsx';
 import { useNotifications, NotificationContainer } from './Notification.tsx';
 import { StepProgress } from './Progress.tsx';
@@ -395,8 +395,8 @@ export default function RouteOptimizer() {
           {route && (
             <div className="md:col-span-1 md:row-span-1">
               <div className="card h-full flex flex-col">
-                <div className="flex items-center justify-between mb-3 flex-shrink-0">
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                  <h2 className="text-base font-semibold text-gray-900 flex items-center">
                     <Fuel className="mr-2 h-4 w-4" />
                     Résultats
                   </h2>
@@ -405,25 +405,65 @@ export default function RouteOptimizer() {
                     className="btn-secondary flex items-center text-xs px-2 py-1 touch-manipulation"
                   >
                     <FileText className="mr-1 h-3 w-3" />
-                    Export
+                    Détails/Export
                   </button>
                 </div>
                 
-                <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-1 text-xs">
+                <div className="space-y-2 flex-1">
+                  {/* Main metrics */}
+                  <div className="grid grid-cols-2 gap-2">
                     <div className="bg-blue-50 p-2 rounded">
-                      <div className="font-medium text-blue-900">Distance</div>
-                      <div className="text-blue-700 font-semibold">{route.totalDistance.toFixed(1)} km</div>
+                      <div className="text-xs font-medium text-blue-900">Distance</div>
+                      <div className="text-sm font-bold text-blue-700">{route.totalDistance.toFixed(1)} km</div>
                     </div>
                     <div className="bg-green-50 p-2 rounded">
-                      <div className="font-medium text-green-900">Durée</div>
-                      <div className="text-green-700 font-semibold">{Math.round(route.totalDuration)} min</div>
+                      <div className="text-xs font-medium text-green-900">Durée</div>
+                      <div className="text-sm font-bold text-green-700">
+                        {Math.floor(route.totalDuration / 60)}h{String(Math.round(route.totalDuration % 60)).padStart(2, '0')}
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="bg-gray-50 p-2 rounded text-xs">
-                    <div className="font-medium text-gray-700 mb-1">Trajet optimisé</div>
-                    <div className="text-gray-600">{route.locations.length} arrêts</div>
+                  {/* Additional details - more compact */}
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 flex items-center">
+                        <Car className="h-3 w-3 mr-1" />
+                        Véhicule:
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {vehicleType === 'car' ? 'Voiture' : 'Camion'}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        Arrêts:
+                      </span>
+                      <span className="font-medium text-gray-900">{route.locations.length}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 flex items-center">
+                        <Settings2 className="h-3 w-3 mr-1" />
+                        Méthode:
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {optimizationMethod === 'shortest_distance' ? 'Distance' : 
+                         optimizationMethod === 'fastest_time' ? 'Temps' : 'Équilibré'}
+                      </span>
+                    </div>
+                    
+                    {isLoop && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center">
+                          <Navigation className="h-3 w-3 mr-1" />
+                          Trajet en boucle
+                        </span>
+                        <span className="font-medium text-green-600">✓</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -434,13 +474,41 @@ export default function RouteOptimizer() {
           {route && (
             <div className="md:col-span-3 md:row-span-1">
               <div className="card h-full flex flex-col">
-                <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center flex-shrink-0">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Détails du trajet
+                <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center flex-shrink-0">
+                  <MapPin className="mr-2 h-4 w-4" />
+                  Étapes Détaillées
                 </h2>
                 
                 <div className="flex-1 min-h-0 overflow-y-auto">
-                  <RouteDetails route={route} />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {route.segments.map((segment, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center space-x-2 min-w-0 flex-1">
+                          <div className="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                            {index + 1}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-900 truncate text-xs">
+                              {trimAddress(segment.from.address)}
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center">
+                              <Navigation className="h-3 w-3 mr-1" />
+                              {trimAddress(segment.to.address)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <div className="text-xs font-medium text-gray-900">
+                            {segment.distance.toFixed(1)} km
+                          </div>
+                          <div className="text-xs text-gray-500 flex items-center justify-end">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {Math.round(segment.duration)} min
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
