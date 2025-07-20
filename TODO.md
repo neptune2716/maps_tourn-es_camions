@@ -276,12 +276,6 @@ A web application for finding shortest routes between multiple locations, suppor
   - [x] **NEW**: Vehicle-specific instructions (truck restrictions)
   - [x] **NEW**: Print and copy functionality for directions
 
-- [x] Cost Estimation Engine
-  - [x] **NEW**: Real-time fuel cost calculation based on vehicle type
-  - [x] **NEW**: Toll estimation with distance-based calculations
-  - [x] **NEW**: Total trip cost summary with breakdown
-  - [x] **NEW**: 2025 fuel price estimates and consumption rates
-  - [x] **NEW**: Visual cost display in export components
 
 ## Phase 9: Performance & Optimization
 - [ ] Performance Optimization
@@ -294,6 +288,14 @@ A web application for finding shortest routes between multiple locations, suppor
   - [ ] Cache calculated routes
   - [ ] Store user preferences
   - [ ] Offline functionality (basic)
+
+- [] minor bug fixes
+  - [] allow user to cancel the route calculation
+  - [] when the route is being calculated, be careful that the info in the results are that of before the calculation, if parametre are changed during calculations, it should not interfere with the results as it is not yet calculated. when clicking on "calculate route" it should keep the parameters in memory until the route is calculated and result displayed, theses variable should only be updated when the button calculate route is clicked again after the previous calculation is done.
+- [ ] optimise the autocompletion
+  - [ ] improve the performance of the autocomplete suggestions
+  - [ ] reduce the number of API calls to Nominatim, to do that do not make call while the user is still typing, wait for a small delay (500ms) after the user stops typing before making the API call
+  - [ ] implement caching for frequently used locations
 
 ## Phase 10: Testing & Quality Assurance
 - [ ] Unit Testing

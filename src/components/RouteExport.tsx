@@ -15,6 +15,17 @@ export default function RouteExport({ route }: RouteExportProps) {
   const [exportStep, setExportStep] = useState('');
   const { addNotification } = useNotifications();
 
+  // Fonction helper pour formater les durées
+  const formatDuration = (minutes: number): string => {
+    if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      const mins = Math.round(minutes % 60);
+      return `${hours}h${mins.toString().padStart(2, '0')}`;
+    } else {
+      return `${Math.round(minutes)} min`;
+    }
+  };
+
   const captureMapAndGeneratePDF = async () => {
     try {
       // Générer une carte simple pour le PDF
@@ -114,12 +125,12 @@ export default function RouteExport({ route }: RouteExportProps) {
           
           // Calculer et ajuster la vue selon le nombre de points
           if (validLocations.length === 1) {
-            map.setView([validLocations[0].coordinates!.latitude, validLocations[0].coordinates!.longitude], 14);
+            map.setView([validLocations[0].coordinates!.latitude, validLocations[0].coordinates!.longitude], 15);
           } else {
             const leafletBounds = L.latLngBounds(
               validLocations.map(loc => [loc.coordinates!.latitude, loc.coordinates!.longitude])
             );
-            map.fitBounds(leafletBounds.pad(0.12));
+            map.fitBounds(leafletBounds.pad(0.01), { maxZoom: 16 }); // Padding minimal + zoom max
           }
 
           // Ajouter les marqueurs avec un style optimisé
@@ -317,7 +328,7 @@ export default function RouteExport({ route }: RouteExportProps) {
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(255, 152, 0);
-    pdf.text(`${Math.floor(route.totalDuration / 60)}h${(Math.round(route.totalDuration) % 60).toString().padStart(2, '0')}`, box3X + boxWidth/2, box3Y + 18, { align: 'center' });
+    pdf.text(formatDuration(route.totalDuration), box3X + boxWidth/2, box3Y + 18, { align: 'center' });
     
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
@@ -494,7 +505,7 @@ export default function RouteExport({ route }: RouteExportProps) {
       pdf.text(`${segment.distance.toFixed(1)} km`, 40, yPosition + 30);
       
       pdf.setTextColor(255, 152, 0);
-      pdf.text(`${Math.round(segment.duration)} min`, 90, yPosition + 30);
+      pdf.text(formatDuration(segment.duration), 90, yPosition + 30);
       
       yPosition += stepHeight + 5;
     });
@@ -659,7 +670,7 @@ export default function RouteExport({ route }: RouteExportProps) {
   </metadata>
   <rte>
     <name>Trajet Optimisé ${route.totalDistance.toFixed(1)}km</name>
-    <desc>${route.locations.length} arrêts - ${Math.round(route.totalDuration)} minutes</desc>
+    <desc>${route.locations.length} arrêts - ${formatDuration(route.totalDuration)}</desc>
     ${route.locations.map((location, index) => 
       location.coordinates ? `
     <rtept lat="${location.coordinates.latitude}" lon="${location.coordinates.longitude}">

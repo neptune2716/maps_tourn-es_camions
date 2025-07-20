@@ -125,10 +125,10 @@ export default function OpenStreetMapComponent({
     // Fit map to show all markers
     if (validLocations.length === 1) {
       const coords = validLocations[0].coordinates!;
-      mapInstance.current.setView([coords.latitude, coords.longitude], 14);
+      mapInstance.current.setView([coords.latitude, coords.longitude], 15); // Zoom plus élevé pour un seul point
     } else if (validLocations.length > 1) {
       const group = new L.FeatureGroup(markersRef.current);
-      mapInstance.current.fitBounds(group.getBounds().pad(0.1));
+      mapInstance.current.fitBounds(group.getBounds().pad(0.01), { maxZoom: 16 }); // Padding minimal + zoom max
     }
   }, [locations]);
 
@@ -195,7 +195,7 @@ export default function OpenStreetMapComponent({
       }, null as L.LatLngBounds | null);
 
       if (allBounds) {
-        mapInstance.current.fitBounds(allBounds.pad(0.1));
+        mapInstance.current.fitBounds(allBounds.pad(0.01), { maxZoom: 16 }); // Padding minimal + zoom max pour la route
       }
     }
   }, [route]);
