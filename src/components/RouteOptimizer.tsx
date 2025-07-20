@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Upload, MapPin, Play, AlertCircle, AlertTriangle, Settings2, Car, Truck, Clock, Fuel, Navigation } from 'lucide-react';
+import { Upload, MapPin, Play, AlertCircle, AlertTriangle, Settings2, Car, Truck, Clock, Fuel, Navigation, FileText } from 'lucide-react';
 import { Location, VehicleType, OptimizationMethod, Route } from '../types/index.ts';
 import { freeRoutingService } from '../services/freeRoutingService.ts';
 import { trimAddress } from '../utils/routeUtils.ts';
@@ -8,6 +8,7 @@ import AddressAutocomplete from './AddressAutocomplete.tsx';
 import FileUpload from './FileUpload.tsx';
 import LocationList from './LocationList.tsx';
 import LoadingSpinner from './LoadingSpinner.tsx';
+import RouteResults from './RouteResults.tsx';
 import { useNotifications, NotificationContainer } from './Notification.tsx';
 import { StepProgress } from './Progress.tsx';
 import { AddressSuggestion } from '../hooks/useAddressSearch.ts';
@@ -23,6 +24,7 @@ export default function RouteOptimizer() {
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [calculationStep, setCalculationStep] = useState(0);
+  const [showResults, setShowResults] = useState(false);
   
   // Notifications system
   const { notifications, addNotification, removeNotification } = useNotifications();
@@ -193,6 +195,11 @@ export default function RouteOptimizer() {
         autoCloseDuration: 4000
       });
       
+      // Naviguer vers la page de résultats après un court délai
+      setTimeout(() => {
+        setShowResults(true);
+      }, 1000);
+      
       console.log('Trajet optimisé avec succès:', response);
     } catch (error) {
       console.error('Échec de l\'optimisation de trajet:', error);
@@ -211,6 +218,20 @@ export default function RouteOptimizer() {
       setCalculationStep(0);
     }
   };
+
+  // Si on affiche les résultats, rendre la page de résultats
+  if (showResults && route) {
+    return (
+      <RouteResults
+        route={route}
+        onBack={() => setShowResults(false)}
+        onModifyRoute={() => {
+          setShowResults(false);
+          setRoute(undefined);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gray-50">
@@ -370,6 +391,17 @@ export default function RouteOptimizer() {
                         </div>
                       )}
                     </div>
+                  </div>
+                  
+                  {/* View Results Button */}
+                  <div className="pt-3 border-t border-gray-200">
+                    <button
+                      onClick={() => setShowResults(true)}
+                      className="btn-primary w-full flex items-center justify-center touch-manipulation"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Voir Résultats Détaillés
+                    </button>
                   </div>
                 </div>
               </div>

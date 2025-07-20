@@ -55,6 +55,10 @@
   .btn-warning {
     @apply bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow focus:ring-2 focus:ring-amber-500 focus:ring-offset-2;
   }
+
+  .btn-outline {
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-all duration-200 border border-gray-300 hover:border-gray-400 shadow-sm hover:shadow focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+  }
   
   .card {
     @apply bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 transition-shadow hover:shadow-md;
