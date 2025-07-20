@@ -294,12 +294,7 @@ export default function RouteOptimizer() {
       setCalculationStep(0);
       setAbortController(null);
       
-      addNotification({
-        type: 'info',
-        title: 'Calcul annulé',
-        message: 'Le calcul du trajet a été annulé.',
-        autoClose: true
-      });
+      // Ne pas ajouter de notification ici, elle sera gérée dans le catch
     }
   };
 

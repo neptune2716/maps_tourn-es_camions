@@ -97,6 +97,17 @@
     touch-action: manipulation;
   }
   
+  /* Forcer les notifications au-dessus de tout */
+  .notification-container {
+    z-index: 999999 !important;
+    position: fixed !important;
+  }
+  
+  /* S'assurer que les cartes Leaflet restent en dessous */
+  .leaflet-container {
+    z-index: 1 !important;
+  }
+  
   /* Prevent text selection for drag elements */
   .drag-handle {
     user-select: none;
