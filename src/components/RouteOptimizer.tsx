@@ -313,12 +313,12 @@ export default function RouteOptimizer() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] bg-gray-50 overflow-hidden">
-      <div className="h-full p-2 sm:p-4">
-        {/* Main Grid Layout: 4 columns x 4 rows on desktop, stacked on mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-auto md:grid-rows-4 gap-2 sm:gap-4 h-full">
-          {/* Emplacements - Mobile: full width, Desktop: Column 1, Rows 1-3 */}
-          <div className="md:col-span-1 md:row-span-3 flex flex-col">
+    <div className="min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] bg-gray-50 lg:overflow-hidden">
+      <div className="h-full p-3 sm:p-4 lg:p-4">
+        {/* Mobile-first responsive layout: stacked mobile, grid desktop */}
+        <div className="flex flex-col lg:grid lg:grid-cols-4 lg:grid-rows-4 gap-3 sm:gap-4 lg:gap-4 lg:h-full">
+          {/* Emplacements - Mobile: full width first, Desktop: Column 1, Rows 1-3 */}
+          <div className="order-1 lg:col-span-1 lg:row-span-3 flex flex-col">
             <div className="card flex-1 flex flex-col min-h-0">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center flex-shrink-0">
                 <MapPin className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -335,14 +335,14 @@ export default function RouteOptimizer() {
                 />
                 <button
                   onClick={addLocation}
-                  className="btn-primary px-4 touch-manipulation"
+                  className="btn-primary px-4 py-3 sm:py-2.5 touch-manipulation text-base sm:text-sm"
                   disabled={!newAddress.trim()}
                 >
-                  +
+                  Ajouter
                 </button>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-2.5 flex-1 overflow-y-auto mb-2.5 min-h-0">
+              <div className="border border-gray-200 rounded-lg p-2.5 flex-1 overflow-y-auto mb-2.5 min-h-0 max-h-64 sm:max-h-none">
                 <LocationList
                   locations={locations}
                   onLocationUpdate={handleLocationUpdate}
@@ -355,7 +355,7 @@ export default function RouteOptimizer() {
               <div className="space-y-2 sm:space-y-2.5 flex-shrink-0">
                 <button 
                   onClick={() => setShowFileUpload(true)}
-                  className="btn-secondary w-full text-sm flex items-center justify-center touch-manipulation"
+                  className="btn-secondary w-full text-sm sm:text-sm flex items-center justify-center touch-manipulation py-3 sm:py-2.5"
                 >
                   <Upload className="mr-2 h-4 w-4" />
                   Importer fichier
@@ -369,7 +369,7 @@ export default function RouteOptimizer() {
                       (!isCalculating && locations.length < 2) || 
                       (!isCalculating && locations.some(loc => !loc.coordinates))
                     }
-                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation"
+                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center touch-manipulation py-3 sm:py-2.5 text-base sm:text-sm"
                   >
                     {isCalculating ? (
                       <>
@@ -421,15 +421,15 @@ export default function RouteOptimizer() {
             </div>
           </div>
 
-          {/* Paramètres - Mobile: full width, Desktop: Column 2, Rows 1-3 */}
-          <div className="md:col-span-1 md:row-span-3">
+          {/* Paramètres - Mobile: second, Desktop: Column 2, Rows 1-3 */}
+          <div className="order-2 lg:col-span-1 lg:row-span-3">
             <div className="card h-full flex flex-col">
               <div className="flex items-center mb-3 sm:mb-4 flex-shrink-0">
                 <Settings2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Paramètres</h2>
               </div>
 
-              <div className="space-y-2 sm:space-y-3 flex-1">
+              <div className="space-y-3 sm:space-y-3 flex-1">
                 <RouteSettings
                   vehicleType={vehicleType}
                   onVehicleTypeChange={setVehicleType}
@@ -443,8 +443,8 @@ export default function RouteOptimizer() {
             </div>
           </div>
 
-          {/* Map - Mobile: full width, Desktop: Columns 3-4, Rows 1-3 */}
-          <div className="md:col-span-2 md:row-span-3">
+          {/* Map - Mobile: third (prominent), Desktop: Columns 3-4, Rows 1-3 */}
+          <div className="order-3 lg:col-span-2 lg:row-span-3">
             <div className="card h-full flex flex-col">
               <div className="flex items-center mb-3 sm:mb-4 flex-shrink-0">
                 <Map className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -459,7 +459,7 @@ export default function RouteOptimizer() {
                 </div>
               )}
               
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 h-64 sm:h-80 lg:h-auto">
                 <LazyMap
                   locations={locations}
                   route={route}
@@ -468,9 +468,9 @@ export default function RouteOptimizer() {
             </div>
           </div>
 
-          {/* Résultats - Mobile: full width, Desktop: Column 1, Row 4 */}
+          {/* Résultats - Mobile: fourth order, Desktop: Column 1, Row 4 */}
           {route && (
-            <div className="md:col-span-1 md:row-span-1">
+            <div className="order-4 lg:col-span-1 lg:row-span-1">
               <div className="card h-full flex flex-col">
                 <div className="flex items-center justify-between mb-2 flex-shrink-0">
                   <h2 className="text-base font-semibold text-gray-900 flex items-center">
@@ -479,10 +479,11 @@ export default function RouteOptimizer() {
                   </h2>
                   <button
                     onClick={() => setShowExportPopup(true)}
-                    className="btn-primary flex items-center text-xs px-2 py-1 touch-manipulation"
+                    className="btn-primary flex items-center text-xs px-3 py-2 sm:px-2 sm:py-1 touch-manipulation"
                   >
                     <FileText className="mr-1 h-3 w-3" />
-                    Export
+                    <span className="hidden sm:inline">Export</span>
+                    <span className="sm:hidden">📤</span>
                   </button>
                 </div>
                 
@@ -491,11 +492,11 @@ export default function RouteOptimizer() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-blue-50 p-2 rounded">
                       <div className="text-xs font-medium text-blue-900">Distance</div>
-                      <div className="text-sm font-bold text-blue-700">{route.totalDistance.toFixed(1)} km</div>
+                      <div className="text-sm sm:text-sm font-bold text-blue-700">{route.totalDistance.toFixed(1)} km</div>
                     </div>
                     <div className="bg-green-50 p-2 rounded">
                       <div className="text-xs font-medium text-green-900">Durée</div>
-                      <div className="text-sm font-bold text-green-700">
+                      <div className="text-sm sm:text-sm font-bold text-green-700">
                         {Math.floor(route.totalDuration / 60)}h{String(Math.round(route.totalDuration % 60)).padStart(2, '0')}
                       </div>
                     </div>
@@ -526,7 +527,7 @@ export default function RouteOptimizer() {
                         <Settings2 className="h-3 w-3 mr-1" />
                         Méthode:
                       </span>
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 text-right">
                         {optimizationMethod === 'shortest_distance' ? 'Distance' : 
                          optimizationMethod === 'fastest_time' ? 'Temps' : 'Équilibré'}
                       </span>
@@ -547,17 +548,25 @@ export default function RouteOptimizer() {
             </div>
           )}
 
-          {/* Détails - Mobile: full width, Desktop: Columns 2-4, Row 4 */}
+          {/* Détails - Mobile: last order, Desktop: Columns 2-4, Row 4 */}
           {route && (
-            <div className="md:col-span-3 md:row-span-1">
+            <div className="order-5 lg:col-span-3 lg:row-span-1">
               <div className="card h-full flex flex-col">
-                <h2 className="text-base font-semibold text-gray-900 mb-3 flex items-center flex-shrink-0">
-                  <MapPin className="mr-2 h-4 w-4" />
-                  Étapes Détaillées
-                </h2>
+                <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                  <h2 className="text-base font-semibold text-gray-900 flex items-center">
+                    <MapPin className="mr-2 h-4 w-4" />
+                    Étapes Détaillées
+                  </h2>
+                  <button
+                    onClick={() => setShowResults(true)}
+                    className="btn-primary text-xs px-3 py-2 touch-manipulation"
+                  >
+                    Voir Détails
+                  </button>
+                </div>
                 
-                <div className="flex-1 min-h-0 overflow-y-auto">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div className="flex-1 min-h-0 overflow-y-auto max-h-48 lg:max-h-none">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {route.segments.map((segment, index) => (
                       <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs hover:bg-gray-100 transition-colors">
                         <div className="flex items-center space-x-2 min-w-0 flex-1">

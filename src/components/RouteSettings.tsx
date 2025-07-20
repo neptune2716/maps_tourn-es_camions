@@ -83,7 +83,7 @@ export default function RouteSettings({
         <label className="block text-sm font-medium text-gray-700 mb-3">
           Type de Véhicule
         </label>
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
           {vehicleOptions.map((option) => {
             const Icon = option.icon;
             const isSelected = vehicleType === option.type;
@@ -93,7 +93,7 @@ export default function RouteSettings({
                 key={option.type}
                 onClick={() => !disabled && onVehicleTypeChange(option.type)}
                 disabled={disabled}
-                className={'p-3 rounded-lg border-2 text-left transition-all duration-200 ' + 
+                className={'p-3 rounded-lg border-2 text-left transition-all duration-200 touch-manipulation ' + 
                   (disabled ? 'opacity-50 cursor-not-allowed' : '') +
                   (isSelected ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50')
                 }
@@ -126,7 +126,7 @@ export default function RouteSettings({
                 key={option.method}
                 onClick={() => !disabled && onOptimizationMethodChange(option.method)}
                 disabled={disabled}
-                className={'w-full p-3 rounded-lg border text-left transition-all duration-200 ' + 
+                className={'w-full p-3 rounded-lg border text-left transition-all duration-200 touch-manipulation ' + 
                   (disabled ? 'opacity-50 cursor-not-allowed' : '') +
                   (isSelected ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50')
                 }
