@@ -408,21 +408,23 @@ export default function RouteOptimizer() {
           {/* Paramètres - Mobile: second, Desktop: Column 2, Rows 1-3 */}
           <div className="order-2 lg:col-span-1 lg:row-span-3">
             <div className="card h-full flex flex-col">
-              <div className="flex items-center mb-3 sm:mb-4 flex-shrink-0">
-                <Settings2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Paramètres</h2>
+              <div className="flex items-center mb-0 flex-shrink-0">
+                <Settings2 className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <h2 className="text-sm sm:text-base font-semibold text-gray-900">Paramètres</h2>
               </div>
 
-              <div className="space-y-3 sm:space-y-3 flex-1">
-                <RouteSettings
-                  vehicleType={vehicleType}
-                  onVehicleTypeChange={setVehicleType}
-                  optimizationMethod={optimizationMethod}
-                  onOptimizationMethodChange={setOptimizationMethod}
-                  isLoop={isLoop}
-                  onLoopChange={setIsLoop}
-                  disabled={isCalculating}
-                />
+              <div className="space-y-0 flex-1 min-h-0 overflow-hidden">
+                <div className="h-full overflow-y-auto">
+                  <RouteSettings
+                    vehicleType={vehicleType}
+                    onVehicleTypeChange={setVehicleType}
+                    optimizationMethod={optimizationMethod}
+                    onOptimizationMethodChange={setOptimizationMethod}
+                    isLoop={isLoop}
+                    onLoopChange={setIsLoop}
+                    disabled={isCalculating}
+                  />
+                </div>
               </div>
             </div>
           </div>
