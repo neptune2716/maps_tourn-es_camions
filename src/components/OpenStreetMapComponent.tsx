@@ -42,6 +42,13 @@ export default function OpenStreetMapComponent({
 
     mapInstance.current = map;
 
+    // Invalidate size after a short delay to ensure container is rendered
+    setTimeout(() => {
+      if (mapInstance.current) {
+        mapInstance.current.invalidateSize();
+      }
+    }, 100);
+
     return () => {
       if (mapInstance.current) {
         mapInstance.current.remove();
@@ -193,9 +200,32 @@ export default function OpenStreetMapComponent({
     }
   }, [route]);
 
+  // Handle container resize
+  useEffect(() => {
+    if (!mapContainer.current || !mapInstance.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (mapInstance.current) {
+        setTimeout(() => {
+          mapInstance.current?.invalidateSize();
+        }, 100);
+      }
+    });
+
+    resizeObserver.observe(mapContainer.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="relative">
-      <div ref={mapContainer} className={className} />
+    <div className="relative h-full">
+      <div 
+        ref={mapContainer} 
+        className={className}
+        style={{ height: '100%', width: '100%' }}
+      />
       
       {/* No locations message */}
       {locations.length === 0 && (

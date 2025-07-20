@@ -15,6 +15,7 @@
   
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
+    overflow-x: hidden; /* Prevent horizontal scrollbar */
   }
   
   /* Improve text selection on mobile */
