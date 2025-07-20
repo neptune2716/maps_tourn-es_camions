@@ -402,7 +402,7 @@ export default function RouteOptimizer() {
                     className="btn-primary flex items-center text-xs px-2 py-1 touch-manipulation"
                   >
                     <FileText className="mr-1 h-3 w-3" />
-                    Détails/Export
+                    Export
                   </button>
                 </div>
                 

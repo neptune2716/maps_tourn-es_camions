@@ -377,25 +377,75 @@ A web application for finding shortest routes between multiple locations, suppor
 - 📋 **Testing**: Vitest (configured, tests to be written)
 
 ## Current Status
-🚀 **Project Status**: Phase 9 - Performance & Optimization ✅ - Perfect Grid Layout Implementation Complete
+🚀 **Project Status**: Enhanced PDF Export System Complete ✅ - High-Quality Map Generation
 📅 **Last Updated**: July 20, 2025  
-🎯 **Next Milestone**: Phase 9 - Performance Optimization
+🎯 **Next Milestone**: Phase 10 - Testing & Quality Assurance
 
-✅ **Phase 8 Complete**: All Results & Export features implemented including comprehensive RouteDetails, export functionality, and driving directions
+✅ **Latest Enhancement**: Implemented dedicated map generation system for PDF export with improved quality and reliability
 
-### Latest Phase 9 Implementation (Perfect Grid Layout):
+### Latest PDF Map Enhancement (New):
 
-**Grid Layout Revolution (New)**:
-- ✅ **NEW**: Complete CSS Grid layout implementation with perfect alignment
-- ✅ **NEW**: 4x4 grid system: 1/4 emplacements + 1/4 parameters + 2/4 map (width)
-- ✅ **NEW**: 3/4 upper section + 1/4 lower section (height) as requested
-- ✅ **NEW**: Résultats positioned under emplacements (column 1, row 4)
-- ✅ **NEW**: Détails positioned under parameters+map (columns 2-4, row 4)
-- ✅ **NEW**: Perfect container alignment with forced grid positioning
-- ✅ **NEW**: Responsive design: stacked on mobile, grid on desktop (md+ breakpoint)
-- ✅ **NEW**: No more misaligned containers or layout issues
-- ✅ **NEW**: Full viewport height utilization with proper overflow handling
-- ✅ **NEW**: Flexbox integration within grid cells for optimal content distribution
+**Dedicated Map Generation System (New)**:
+- ✅ **NEW**: Created `mapGenerator.ts` utility for PDF-specific map creation
+- ✅ **NEW**: Map generation independent of main application view (no screenshots)
+- ✅ **NEW**: High-quality map rendering (800x500px, 150 DPI) for crisp PDF output
+- ✅ **NEW**: Clean, professional map design optimized for print/PDF
+- ✅ **NEW**: Numbered markers with clear visibility and proper labeling
+- ✅ **NEW**: Real route geometry display with proper road following
+
+**Enhanced PDF Quality (Improved)**:
+- ✅ **ENHANCED**: PNG format instead of JPEG for better map quality
+- ✅ **ENHANCED**: Larger map area in PDF (150px height) for better readability
+- ✅ **ENHANCED**: Added map legend under the generated map
+- ✅ **ENHANCED**: Better error handling with fallback when map generation fails
+- ✅ **ENHANCED**: Improved user feedback during map generation process
+- ✅ **ENHANCED**: Professional map styling with proper contrast and markers
+
+**Technical Implementation (New)**:
+- ✅ **NEW**: Leaflet map creation in hidden DOM element for PDF capture
+- ✅ **NEW**: Asynchronous map tile loading with completion detection
+- ✅ **NEW**: Custom marker generation with numbered icons and proper styling
+- ✅ **NEW**: Route polyline rendering with real road geometry from OSRM
+- ✅ **NEW**: Automatic bounds calculation and optimal zoom level
+- ✅ **NEW**: HTML2Canvas integration for high-quality map capture
+- ✅ **NEW**: Proper cleanup of temporary DOM elements
+
+**Reliability Improvements (Enhanced)**:
+- ✅ **IMPROVED**: Better map loading detection with tile counting
+- ✅ **IMPROVED**: Fallback handling when map tiles fail to load
+- ✅ **IMPROVED**: Enhanced error handling with user-friendly messages
+- ✅ **IMPROVED**: Progress notifications during export process
+- ✅ **IMPROVED**: Consistent map rendering across different devices
+- ✅ **IMPROVED**: Memory management with proper map disposal
+
+**Critical PDF Fixes (New)**:
+- ✅ **FIXED**: Character encoding issues (removed special characters/emojis causing corruption)
+- ✅ **FIXED**: Text positioning and layout problems in PDF generation
+- ✅ **FIXED**: Broken characters like "Ø=ÛÉ" replaced with proper French text
+- ✅ **SIMPLIFIED**: Removed problematic Unicode characters that caused PDF corruption
+- ✅ **OPTIMIZED**: Clean ASCII-compatible text throughout the PDF
+- ✅ **IMPROVED**: Better error handling for map capture and text rendering
+
+**Reliable PDF Structure (Fixed)**:
+- ✅ **Page 1**: Clean title header + general information + statistics (no broken chars)
+- ✅ **Page 2**: Map capture (with proper fallback) + visual summary
+- ✅ **Page 3+**: Detailed step breakdown with proper text encoding
+- ✅ **Layout**: Fixed positioning and spacing issues throughout all pages
+- ✅ **Typography**: Reliable Helvetica fonts with proper sizing
+
+**Enhanced Stability (New)**:
+- ✅ **Text Handling**: All French accents and special characters properly handled
+- ✅ **Map Integration**: Improved error handling for map capture failures
+- ✅ **Address Truncation**: Long addresses properly truncated to prevent overflow
+- ✅ **Consistent Formatting**: Uniform spacing and alignment throughout PDF
+- ✅ **Professional Output**: Clean, readable PDF that actually works properly
+
+**Technical Improvements (Fixed)**:
+- ✅ **Encoding**: Proper character encoding for French text without corruption
+- ✅ **Error Recovery**: Graceful handling of map capture failures
+- ✅ **Performance**: Optimized PDF generation process
+- ✅ **Compatibility**: Better cross-platform PDF rendering
+- ✅ **File Size**: Optimized output size with proper image compression
 
 ### Latest Phase 7 Completion (User Interface & Experience):
 

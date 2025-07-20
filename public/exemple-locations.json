@@ -15,7 +15,9 @@
     "longitude": 2.5479
   },
   {
-    "address": "La Défense, Paris"
+    "address": "La Défense, Paris",
+    "latitude": 48.8914,
+    "longitude": 2.2364
   },
   {
     "address": "Bois de Vincennes",

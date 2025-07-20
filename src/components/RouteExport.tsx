@@ -1,80 +1,484 @@
 import { useState } from 'react';
-import { Download, Share2, FileText, Navigation, Printer } from 'lucide-react';
+import { Download, Share2, Navigation } from 'lucide-react';
 import { Route } from '../types/index.ts';
 import { useNotifications } from './Notification.tsx';
 import LoadingSpinner from './LoadingSpinner.tsx';
+import jsPDF from 'jspdf';
+import L from 'leaflet';
 
 interface RouteExportProps {
   route: Route;
 }
 
-interface ExportOptions {
-  includeCostEstimation: boolean;
-  includeInstructions: boolean;
-  includeMap: boolean;
-  format: 'pdf' | 'excel' | 'json';
-}
-
 export default function RouteExport({ route }: RouteExportProps) {
   const [isExporting, setIsExporting] = useState(false);
-  const [exportOptions, setExportOptions] = useState<ExportOptions>({
-    includeCostEstimation: true,
-    includeInstructions: true,
-    includeMap: false,
-    format: 'pdf'
-  });
+  const [exportStep, setExportStep] = useState('');
   const { addNotification } = useNotifications();
 
-  const calculateCosts = () => {
-    const fuelConsumption = route.vehicleType === 'car' ? 7 : 12; // L/100km
-    const fuelPrice = 1.45; // €/L (estimation 2025)
-    const fuelCost = (route.totalDistance / 100) * fuelConsumption * fuelPrice;
+  const captureMapAndGeneratePDF = async () => {
+    try {
+      // Générer une carte simple pour le PDF
+      const mapImageData = await generateSimpleMapForPDF();
+      return generateComprehensivePDF(mapImageData);
+    } catch (error) {
+      console.warn('Impossible de générer la carte, génération du PDF sans carte', error);
+      return generateComprehensivePDF(null);
+    }
+  };
+
+  const generateSimpleMapForPDF = async (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Créer un conteneur temporaire avec aspect ratio correct
+        const tempContainer = document.createElement('div');
+        tempContainer.style.width = '600px';
+        tempContainer.style.height = '400px'; // Ratio 3:2 pour éviter l'étirement
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.top = '-9999px';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.overflow = 'hidden';
+        tempContainer.style.border = 'none';
+        tempContainer.style.imageRendering = 'crisp-edges'; // Améliorer le rendu des images
+        tempContainer.style.textRendering = 'optimizeLegibility'; // Améliorer le rendu du texte
+        document.body.appendChild(tempContainer);
+
+        // Vérifier qu'on a des coordonnées valides
+        const validLocations = route.locations.filter(loc => loc.coordinates);
+        if (validLocations.length === 0) {
+          document.body.removeChild(tempContainer);
+          reject(new Error('Aucune coordonnée valide'));
+          return;
+        }
+
+        // Calculer le centre
+        const lats = validLocations.map(loc => loc.coordinates!.latitude);
+        const lngs = validLocations.map(loc => loc.coordinates!.longitude);
+        const centerLat = lats.reduce((sum, lat) => sum + lat, 0) / lats.length;
+        const centerLng = lngs.reduce((sum, lng) => sum + lng, 0) / lngs.length;
+
+        // Créer la carte avec options spécifiques pour l'export
+        const map = L.map(tempContainer, {
+          zoomControl: false,
+          attributionControl: false,
+          dragging: false,
+          scrollWheelZoom: false,
+          doubleClickZoom: false,
+          boxZoom: false,
+          keyboard: false,
+          preferCanvas: true, // Utilise Canvas pour de meilleures performances
+          renderer: L.canvas() // Force l'utilisation du renderer Canvas
+        }).setView([centerLat, centerLng], 10);
+
+        // Forcer la taille de la carte
+        map.getContainer().style.width = '600px';
+        map.getContainer().style.height = '400px';
+
+        // Ajouter les tuiles avec paramètres optimisés
+        const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 15, // Réduire le zoom max pour une meilleure qualité
+          minZoom: 5,
+          detectRetina: false, // Désactiver la détection retina pour plus de stabilité
+          errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' // Tuile vide en cas d'erreur
+        });
+        tileLayer.addTo(map);
+
+        // Invalider la taille de la carte pour s'assurer du bon rendu
+        setTimeout(() => {
+          map.invalidateSize(true);
+          
+          // Attendre un court délai puis ajouter les marqueurs
+          setTimeout(() => {
+            try {
+              // Calculer et ajuster la vue en premier
+              if (validLocations.length === 1) {
+                map.setView([validLocations[0].coordinates!.latitude, validLocations[0].coordinates!.longitude], 13);
+              } else {
+                const leafletBounds = L.latLngBounds(
+                  validLocations.map(loc => [loc.coordinates!.latitude, loc.coordinates!.longitude])
+                );
+                map.fitBounds(leafletBounds.pad(0.15)); // Plus de padding pour éviter que les marqueurs soient coupés
+              }
+
+              // Ajouter les marqueurs
+              validLocations.forEach((location, index) => {
+                const iconColor = location.isLocked ? '#dc2626' : '#2563eb'; // Bleu plus foncé pour meilleur contraste
+                const customIcon = L.divIcon({
+                  html: `
+                    <div style="
+                      width: 40px;
+                      height: 40px;
+                      background-color: ${iconColor};
+                      border: 4px solid white;
+                      border-radius: 50%;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-weight: 900;
+                      color: white;
+                      font-size: 16px;
+                      box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+                      font-family: 'Arial Black', 'Arial', sans-serif;
+                      line-height: 1;
+                      text-align: center;
+                      position: relative;
+                    ">
+                      ${index + 1}
+                    </div>
+                  `,
+                  className: 'custom-marker-export',
+                  iconSize: [40, 40],
+                  iconAnchor: [20, 20],
+                });
+
+                L.marker([location.coordinates!.latitude, location.coordinates!.longitude], {
+                  icon: customIcon
+                }).addTo(map);
+              });
+
+              // Ajouter les routes si disponibles
+              if (route.segments && route.segments.length > 0) {
+                route.segments.forEach((segment, index) => {
+                  if (segment.polyline && segment.polyline.coordinates) {
+                    const coordinates = segment.polyline.coordinates.map((coord: number[]) => 
+                      [coord[1], coord[0]] as L.LatLngExpression
+                    );
+                    
+                    if (coordinates.length > 1) {
+                      const isReturnSegment = index === route.segments.length - 1 && route.isLoop;
+                      L.polyline(coordinates, {
+                        color: isReturnSegment ? '#ef4444' : '#3b82f6',
+                        weight: 3,
+                        opacity: 0.8,
+                        lineCap: 'round',
+                        lineJoin: 'round'
+                      }).addTo(map);
+                    }
+                  } else if (segment.from.coordinates && segment.to.coordinates) {
+                    // Ligne droite de fallback
+                    L.polyline([
+                      [segment.from.coordinates.latitude, segment.from.coordinates.longitude],
+                      [segment.to.coordinates.latitude, segment.to.coordinates.longitude]
+                    ], {
+                      color: '#94a3b8',
+                      weight: 2,
+                      opacity: 0.6,
+                      dashArray: '5, 10'
+                    }).addTo(map);
+                  }
+                });
+              }
+
+              // Invalider la taille une dernière fois avant la capture
+              map.invalidateSize(true);
+
+              // Capturer après un délai pour laisser le temps au rendu
+              setTimeout(async () => {
+                try {
+                  // Améliorer le rendu avant la capture
+                  const allMarkers = tempContainer.querySelectorAll('.custom-marker-export div');
+                  allMarkers.forEach(marker => {
+                    (marker as HTMLElement).style.imageRendering = 'crisp-edges';
+                    (marker as HTMLElement).style.transform = 'translateZ(0)'; // Forcer l'accélération GPU
+                  });
+
+                  // Utiliser html2canvas pour capturer avec options optimisées
+                  const { default: html2canvas } = await import('html2canvas');
+                  const canvas = await html2canvas(tempContainer, {
+                    backgroundColor: '#f8f9fa',
+                    scale: 1.5, // Échelle réduite pour éviter la distorsion
+                    useCORS: true,
+                    allowTaint: false,
+                    logging: false,
+                    width: 600,
+                    height: 400,
+                    windowWidth: 600,
+                    windowHeight: 400,
+                    onclone: (clonedDoc) => {
+                      // Améliorer la qualité des marqueurs dans le clone
+                      const markers = clonedDoc.querySelectorAll('.custom-marker-export div');
+                      markers.forEach(marker => {
+                        (marker as HTMLElement).style.transform = 'scale(1)';
+                        (marker as HTMLElement).style.imageRendering = 'crisp-edges';
+                      });
+                    }
+                  });
+                  
+                  const mapImage = canvas.toDataURL('image/png', 0.95); // Qualité plus élevée
+                  
+                  // Nettoyer
+                  document.body.removeChild(tempContainer);
+                  map.remove();
+                  
+                  resolve(mapImage);
+                } catch (error) {
+                  document.body.removeChild(tempContainer);
+                  map.remove();
+                  reject(error);
+                }
+              }, 1000); // Délai suffisant pour le rendu complet
+              
+            } catch (error) {
+              document.body.removeChild(tempContainer);
+              map.remove();
+              reject(error);
+            }
+          }, 300); // Délai après invalidateSize
+        }, 100); // Délai initial pour s'assurer que le conteneur est prêt
+
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  const generateComprehensivePDF = (mapImageData: string | null) => {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    let yPosition = 20;
     
-    // Estimation des péages (très approximative)
-    const tollCostPerKm = route.vehicleType === 'car' ? 0.08 : 0.15; // €/km
-    const estimatedTollCost = route.totalDistance * tollCostPerKm * 0.3; // 30% de routes à péage
+    // === PAGE 1: TITRE ET INFORMATIONS GÉNÉRALES ===
     
-    return {
-      fuelCost: fuelCost,
-      tollCost: estimatedTollCost,
-      totalCost: fuelCost + estimatedTollCost,
-      fuelConsumption: (route.totalDistance / 100) * fuelConsumption
-    };
+    // En-tête avec titre principal
+    pdf.setFillColor(52, 152, 219); // Bleu professionnel
+    pdf.rect(0, 0, pageWidth, 35, 'F');
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(22);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('RAPPORT DE TRAJET OPTIMISE', pageWidth / 2, 20, { align: 'center' });
+    
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'normal');
+    const currentDate = new Date().toLocaleDateString('fr-FR');
+    const currentTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    pdf.text(`Genere le ${currentDate} a ${currentTime}`, pageWidth / 2, 28, { align: 'center' });
+    
+    yPosition = 50;
+    pdf.setTextColor(0, 0, 0);
+    
+    // Section Informations Générales
+    pdf.setFillColor(240, 248, 255);
+    pdf.rect(15, yPosition - 5, pageWidth - 30, 60, 'F');
+    pdf.setDrawColor(52, 152, 219);
+    pdf.setLineWidth(1);
+    pdf.rect(15, yPosition - 5, pageWidth - 30, 60);
+    
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(52, 152, 219);
+    pdf.text('INFORMATIONS GENERALES', 20, yPosition + 8);
+    
+    yPosition += 20;
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(0, 0, 0);
+    
+    // Informations de base
+    const infoLines = [
+      `Nombre d'arrets: ${route.locations.length} locations`,
+      `Type de vehicule: ${route.vehicleType === 'car' ? 'Voiture' : 'Camion'}`,
+      `Distance totale: ${route.totalDistance.toFixed(2)} km`,
+      `Duree estimee: ${Math.floor(route.totalDuration / 60)}h${(Math.round(route.totalDuration) % 60).toString().padStart(2, '0')}`,
+      `Trajet en boucle: ${route.isLoop ? 'Oui' : 'Non'}`
+    ];
+    
+    infoLines.forEach((line, index) => {
+      pdf.text(line, 20, yPosition + (index * 8));
+    });
+    
+    yPosition += 50;
+    
+    // === CARTE SUR LA PREMIÈRE PAGE ===
+    
+    // Insertion de la carte
+    if (mapImageData) {
+      try {
+        const mapWidth = pageWidth - 30;
+        const mapHeight = 80; // Hauteur réduite pour la première page
+        pdf.addImage(mapImageData, 'PNG', 15, yPosition, mapWidth, mapHeight, undefined, 'FAST');
+        yPosition += mapHeight + 10;
+      } catch (error) {
+        console.warn('Erreur insertion carte:', error);
+        // Fallback en cas d'erreur
+        pdf.setFillColor(245, 245, 245);
+        pdf.rect(15, yPosition, pageWidth - 30, 80, 'F');
+        pdf.setFontSize(12);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('Carte temporairement indisponible', pageWidth / 2, yPosition + 40, { align: 'center' });
+        yPosition += 90;
+      }
+    } else {
+      // Placeholder pour la carte
+      pdf.setFillColor(245, 245, 245);
+      pdf.rect(15, yPosition, pageWidth - 30, 80, 'F');
+      pdf.setDrawColor(200, 200, 200);
+      pdf.rect(15, yPosition, pageWidth - 30, 80);
+      
+      pdf.setFontSize(12);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Carte du trajet', pageWidth / 2, yPosition + 25, { align: 'center' });
+      pdf.text('Consultez l\'application pour la visualisation', pageWidth / 2, yPosition + 40, { align: 'center' });
+      pdf.text(`${route.locations.length} points sur ${route.totalDistance.toFixed(1)} km`, pageWidth / 2, yPosition + 55, { align: 'center' });
+      yPosition += 90;
+    }
+    
+    // === PAGE 2: DÉTAIL DES ÉTAPES ===
+    pdf.addPage();
+    yPosition = 20;
+    
+    // En-tête page détails
+    pdf.setFillColor(156, 39, 176); // Violet
+    pdf.rect(0, 0, pageWidth, 25, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('DETAIL DES ETAPES', pageWidth / 2, 16, { align: 'center' });
+    
+    yPosition = 40;
+    pdf.setTextColor(0, 0, 0);
+    
+    route.segments.forEach((segment, index) => {
+      // Vérifier si on a besoin d'une nouvelle page
+      if (yPosition > pageHeight - 70) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      
+      // Encadré pour chaque étape
+      const stepHeight = 50;
+      
+      // Couleur de fond alternée
+      if (index % 2 === 0) {
+        pdf.setFillColor(248, 249, 250);
+      } else {
+        pdf.setFillColor(255, 255, 255);
+      }
+      pdf.rect(15, yPosition - 5, pageWidth - 30, stepHeight, 'F');
+      pdf.setDrawColor(200, 200, 200);
+      pdf.rect(15, yPosition - 5, pageWidth - 30, stepHeight);
+      
+      // Numéro d'étape
+      pdf.setFillColor(156, 39, 176);
+      pdf.circle(25, yPosition + 10, 8, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${index + 1}`, 25, yPosition + 13, { align: 'center' });
+      
+      // Informations de l'étape
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('DEPART:', 40, yPosition + 5);
+      pdf.setFont('helvetica', 'normal');
+      
+      // Limiter la longueur des adresses
+      const fromAddress = segment.from.address.length > 45 ? segment.from.address.substring(0, 45) + '...' : segment.from.address;
+      const toAddress = segment.to.address.length > 45 ? segment.to.address.substring(0, 45) + '...' : segment.to.address;
+      
+      pdf.text(fromAddress, 75, yPosition + 5);
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('ARRIVEE:', 40, yPosition + 15);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(toAddress, 75, yPosition + 15);
+      
+      // Métriques de l'étape simplifiées
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(76, 175, 80);
+      pdf.text(`${segment.distance.toFixed(1)} km`, 40, yPosition + 30);
+      
+      pdf.setTextColor(255, 152, 0);
+      pdf.text(`${Math.round(segment.duration)} min`, 90, yPosition + 30);
+      
+      yPosition += stepHeight + 5;
+    });
+    
+    // Footer professionnel
+    const footerY = pageHeight - 25;
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(0, footerY, pageWidth, 25, 'F');
+    pdf.setDrawColor(200, 200, 200);
+    pdf.line(0, footerY, pageWidth, footerY);
+    
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 100, 100);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Genere par l\'Optimiseur de Trajets', 20, footerY + 10);
+    pdf.text(`${currentDate} - ${currentTime}`, pageWidth - 20, footerY + 10, { align: 'right' });
+    pdf.text('Application web de planification de trajets', pageWidth / 2, footerY + 18, { align: 'center' });
+    
+    return pdf;
   };
 
   const exportToPDF = async () => {
     setIsExporting(true);
+    setExportStep('Préparation...');
+    
     try {
-      // Simuler la génération PDF
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      addNotification({
+        type: 'info',
+        title: 'Génération en cours',
+        message: 'Création de la carte et du rapport PDF...',
+        autoClose: false
+      });
       
-      const costs = calculateCosts();
-      const content = generateRouteReport(costs);
+      setExportStep('Génération de la carte...');
       
-      // Créer un blob avec le contenu pour téléchargement
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `trajet-optimise-${new Date().toISOString().split('T')[0]}.txt`;
-      link.click();
-      URL.revokeObjectURL(url);
+      // Ajouter un timeout pour éviter le blocage
+      const pdfPromise = captureMapAndGeneratePDF();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout: Génération trop longue')), 15000)
+      );
+      
+      const pdf = await Promise.race([pdfPromise, timeoutPromise]) as jsPDF;
+      
+      setExportStep('Finalisation...');
+      const fileName = `trajet-optimise-${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      pdf.save(fileName);
       
       addNotification({
         type: 'success',
         title: 'Export PDF réussi',
-        message: 'Le rapport de trajet a été téléchargé avec succès.',
+        message: 'Le rapport complet a été téléchargé.',
         autoClose: true
       });
     } catch (error) {
-      addNotification({
-        type: 'error',
-        title: 'Erreur d\'export',
-        message: 'Impossible de générer le PDF. Réessayez plus tard.',
-        autoClose: true
-      });
+      console.error('Erreur export PDF:', error);
+      
+      // En cas d'erreur avec la carte, générer le PDF sans carte
+      try {
+        setExportStep('Génération sans carte...');
+        addNotification({
+          type: 'warning',
+          title: 'Génération sans carte',
+          message: 'La carte n\'a pas pu être générée, création du PDF sans carte...',
+          autoClose: true
+        });
+        
+        const pdf = generateComprehensivePDF(null);
+        const fileName = `trajet-optimise-${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(fileName);
+        
+        addNotification({
+          type: 'success',
+          title: 'Export PDF réussi',
+          message: 'Le rapport a été téléchargé (sans carte).',
+          autoClose: true
+        });
+      } catch (fallbackError) {
+        addNotification({
+          type: 'error',
+          title: 'Erreur d\'export',
+          message: 'Impossible de générer le PDF. Vérifiez votre connexion et réessayez.',
+          autoClose: true
+        });
+      }
     } finally {
       setIsExporting(false);
+      setExportStep('');
     }
   };
 
@@ -140,56 +544,6 @@ export default function RouteExport({ route }: RouteExportProps) {
     });
   };
 
-  const generateRouteReport = (costs: any) => {
-    const date = new Date().toLocaleDateString('fr-FR');
-    return `
-RAPPORT DE TRAJET OPTIMISÉ
-Généré le ${date}
-
-=====================================
-INFORMATIONS GÉNÉRALES
-=====================================
-• Nombre d'arrêts : ${route.locations.length}
-• Type de véhicule : ${route.vehicleType === 'car' ? 'Voiture' : 'Camion'}
-• Distance totale : ${route.totalDistance.toFixed(2)} km
-• Durée estimée : ${Math.floor(route.totalDuration / 60)}h${(Math.round(route.totalDuration) % 60).toString().padStart(2, '0')}
-• Méthode d'optimisation : ${
-  route.optimizationMethod === 'shortest_distance' ? 'Distance la plus courte' :
-  route.optimizationMethod === 'fastest_time' ? 'Temps le plus rapide' :
-  'Équilibré'
-}
-• Trajet en boucle : ${route.isLoop ? 'Oui' : 'Non'}
-
-=====================================
-ESTIMATION DES COÛTS
-=====================================
-• Consommation carburant : ${costs.fuelConsumption.toFixed(1)} L
-• Coût carburant : ${costs.fuelCost.toFixed(2)} €
-• Péages estimés : ${costs.tollCost.toFixed(2)} €
-• COÛT TOTAL ESTIMÉ : ${costs.totalCost.toFixed(2)} €
-
-=====================================
-DÉTAIL DES ÉTAPES
-=====================================
-${route.segments.map((segment, index) => `
-${index + 1}. De : ${segment.from.address}
-   À : ${segment.to.address}
-   Distance : ${segment.distance.toFixed(1)} km
-   Durée : ${Math.round(segment.duration)} min
-`).join('')}
-
-=====================================
-NOTES
-=====================================
-• Les coûts sont des estimations basées sur les prix moyens de 2025
-• Les péages sont estimés à 30% du parcours
-• Vérifiez les conditions de circulation en temps réel
-• Ce rapport a été généré par l'optimiseur de trajets
-
-Bon voyage !
-`;
-  };
-
   const generateGPXFile = () => {
     const date = new Date().toISOString();
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -227,8 +581,6 @@ Bon voyage !
     return `${window.location.origin}/optimize?${params.toString()}`;
   };
 
-  const costs = calculateCosts();
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -238,62 +590,8 @@ Bon voyage !
         </h3>
       </div>
 
-      {/* Cost Estimation */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h4 className="font-medium text-green-900 mb-3 flex items-center">
-          💰 Estimation des Coûts
-        </h4>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <span className="text-green-700">Carburant:</span>
-            <span className="ml-2 font-semibold">{costs.fuelCost.toFixed(2)} €</span>
-            <div className="text-xs text-green-600">({costs.fuelConsumption.toFixed(1)} L)</div>
-          </div>
-          <div>
-            <span className="text-green-700">Péages:</span>
-            <span className="ml-2 font-semibold">{costs.tollCost.toFixed(2)} €</span>
-            <div className="text-xs text-green-600">(estimation)</div>
-          </div>
-          <div className="col-span-2 pt-2 border-t border-green-300">
-            <span className="text-green-800 font-medium">Total estimé:</span>
-            <span className="ml-2 text-lg font-bold text-green-900">{costs.totalCost.toFixed(2)} €</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Export Options */}
-      <div className="space-y-3">
-        <h4 className="font-medium text-gray-900">Options d'export</h4>
-        <div className="space-y-2">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={exportOptions.includeCostEstimation}
-              onChange={(e) => setExportOptions(prev => ({
-                ...prev,
-                includeCostEstimation: e.target.checked
-              }))}
-              className="mr-2 rounded border-gray-300"
-            />
-            <span className="text-sm">Inclure l'estimation des coûts</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={exportOptions.includeInstructions}
-              onChange={(e) => setExportOptions(prev => ({
-                ...prev,
-                includeInstructions: e.target.checked
-              }))}
-              className="mr-2 rounded border-gray-300"
-            />
-            <span className="text-sm">Inclure les instructions détaillées</span>
-          </label>
-        </div>
-      </div>
-
       {/* Export Buttons */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <button
           onClick={exportToPDF}
           disabled={isExporting}
@@ -302,9 +600,27 @@ Bon voyage !
           {isExporting ? (
             <LoadingSpinner size="sm" className="mr-2" />
           ) : (
-            <FileText className="mr-2 h-4 w-4" />
+            <Download className="mr-2 h-4 w-4" />
           )}
-          {isExporting ? 'Génération...' : 'Exporter en PDF'}
+          {isExporting ? exportStep || 'Génération en cours...' : 'Exporter Rapport PDF'}
+        </button>
+
+        <button
+          onClick={() => {
+            const pdf = generateComprehensivePDF(null);
+            const fileName = `trajet-optimise-simple-${new Date().toISOString().split('T')[0]}.pdf`;
+            pdf.save(fileName);
+            addNotification({
+              type: 'success',
+              title: 'Export PDF simple réussi',
+              message: 'Le rapport a été téléchargé (sans carte).',
+              autoClose: true
+            });
+          }}
+          className="btn-secondary w-full flex items-center justify-center"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Export PDF Simple (sans carte)
         </button>
 
         <button
@@ -322,17 +638,6 @@ Bon voyage !
         >
           <Share2 className="mr-2 h-4 w-4" />
           Partager le trajet
-        </button>
-      </div>
-
-      {/* Print Option */}
-      <div className="pt-3 border-t border-gray-200">
-        <button
-          onClick={() => window.print()}
-          className="btn-outline w-full flex items-center justify-center text-sm"
-        >
-          <Printer className="mr-2 h-4 w-4" />
-          Imprimer les instructions
         </button>
       </div>
     </div>
